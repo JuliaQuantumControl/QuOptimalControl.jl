@@ -30,17 +30,17 @@ end
 
 
 """
-Given a set of Hamiltonians compute the piecewise evolution saving the propagators
+Given a set of Hamiltonians compute the piecewise evolution saving the propagator for each time slice
 """
 function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
     out = []
-    U0 = SMatrix{D,D,ComplexF64}(I(2))
+    # U0 = SMatrix{D,D,ComplexF64}(I(2))
     for i = 1:timeslices
         # compute the propagator
         Htot = SMatrix{D,D,ComplexF64}(H₀ + sum(Hₓ_array .* x_arr[:, i]))
-        U0 = exp(-1.0im * timestep * Htot) * U0
+        U0 = exp(-1.0im * timestep * Htot)# * U0
         append!(out, [U0])
     end
     out

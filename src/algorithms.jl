@@ -11,44 +11,68 @@ end
 
 
 """
-Actual GRAPE
+Function that evaluates the figure of merit and computes the gradient, returned as a tuple I guess
 """
+function GRAPE(H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_steps)
+    # compute the propgators
+    U_list = pw_evolve_save(H_drift, H_ctrl_arr, x_init, n_ctrls, dt, n_steps)
 
+    # now we propagate the initial state forward in time
+    ρ_list = [] # need to give it a type it
+    
+    temp_state = ρ
+    for U in U_list
+        temp_state = U * temp_state * U'
+        append!(ρ_list, [temp_state])
+    end
 
-using Plots
+    ρₜ_list = []
+    temp_state = ρₜ
+    for U in reverse(U_list)
+        temp_state = U * temp_state * U'
+        append!(ρₜ_list, [temp_state])
+    end
 
-
-ρₜ_list = []
-temp_state = ρₜ
-for U in reverse(U_list)
-    global temp_state = U * temp_state * U'
-    append!(ρₜ_list, [temp_state])
+    grad = similar(x_init)
+    for k = 1:n_ctrls
+        for j = 1:n_steps # either you do this or you remove the ρ entry in the list above
+            grad[k, j] = -real(tr((ρₜ_list[j])' * 1.0im * dt * commutator(H_ctrl_arr[k], ρ_list[j])))
+        end
+    end
+    
+    # compute all of the 
+    U = reduce(*, U_list)
+    # now lets compute the overlap
+    fid = 1.0 - real(tr(ρₜ' * (U * ρ * U')))
+    (fid, grad)
 end
 
+ρ = [1.0 + 0.0im ; 0.0 + 0.0im]
+ρₜ = [0.0 + 0.0im ; 1.0 + 0.0im]
+
+ρ = ρ * ρ'
+ρₜ = ρₜ * ρₜ'
 
 
-# density matrix simulation of rabi oscillation
-H_ctrl = [2 * pi * sx]
-n_steps = 50 # 10 // 2
-dt = 1 / 50
-x_init = ones(1, 50)
+# define controls
+H_ctrl_arr = [sx, sy]
 
-U_list = pw_evolve_save(H_drift, H_ctrl, x_init, 1, dt, n_steps)
+# define drift
+H_drift = 0 * sz
 
-temp_state = ρₜ
-test_list = []
-append!(test_list, [temp_state])
-for U in reverse(U_list)
-    global temp_state = U * temp_state * U'
-    append!(test_list, [temp_state])
-end
+# initial drive guess
+n_ctrls = length(H_ctrl_arr)
+n_steps = 50
+dt = 1 / n_steps
 
-z = map(x -> real(tr(sz * x)), test_list)
-
-plot!(z)
+x_init = rand(n_ctrls, n_steps) .* 0.0001
 
 
-println("Hi")
+k, f = GRAPE(0 * sz, [sx, sy], ρ, ρₜ, x_init, n_ctrls, dt, n_steps)
+
+
+@benchmark GRAPE(0 * sz, [sx, sy], ρ, ρₜ, x_init, n_ctrls, dt, n_steps)
+
 
 
 using QuantumInformation # right now for convenience

@@ -10,6 +10,7 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 QuantumInformation = "3c0b384b-479c-5684-b2ef-9d7a46dd931e"
 QuantumOpticsBase = "4f57444f-1401-5e15-980d-4471b28d5678"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Yota = "cd998857-8626-517d-b929-70ad188a48f0"
 
 [compat]
 julia = "1.4"

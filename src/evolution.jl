@@ -18,7 +18,7 @@ Given a set of Hamiltonians (drift and control) compute the evolution
 function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices)::T where T
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
-    U0 = SMatrix{D,D,ComplexF64}(I(2))
+    U0 = SMatrix{D,D,ComplexF64}(I(D))
     for i = 1:timeslices
         # compute the propagator
         Htot = SMatrix{D,D,ComplexF64}(H₀ + sum(Hₓ_array .* x_arr[:, i]))

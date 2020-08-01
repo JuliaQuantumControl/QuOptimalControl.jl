@@ -34,6 +34,7 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
     end
     ρₜ_list = reverse(ρₜ_list)
 
+    # approximate gradient from Glaser paper is used here
     grad = similar(x_drive)
     for k = 1:n_ctrls
         for j = 1:n_steps

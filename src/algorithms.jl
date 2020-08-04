@@ -3,6 +3,8 @@ a place where we can store all of the algorithms
 """
 
 include("./cost_functions.jl")
+include("./evolution.jl")
+include("./tools.jl")
 
 
 
@@ -21,7 +23,7 @@ Function that is compatible with Optim.jl, takes Hamiltonians, states and some o
 # TODO - can we tidy it up and make it generically usable?
 function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_steps)
     # compute the propgators
-    U_list = pw_evolve_save(H_drift, H_ctrl_arr, x_drive, n_ctrls, dt, n_steps)
+    U_list = pw_evolve_save(H_drift[1], H_ctrl_arr, x_drive, n_ctrls, dt, n_steps)
 
     # now we propagate the initial state forward in time
     ρ_list = [ρ] # need to give it a type it ρ
@@ -65,8 +67,8 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
 
 end
 
+# using Optim
+# test = (F, G, x) -> GRAPE(F, G, 0 * sz, [sx, sy], ρ, ρₜ, x, n_ctrls, dt, n_steps)
 
-test = (F, G, x) -> GRAPE(F, G, 0 * sz, [sx, sy], ρ, ρₜ, x, n_ctrls, dt, n_steps)
-
-res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
+# res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
 

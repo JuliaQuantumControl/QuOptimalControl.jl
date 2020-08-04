@@ -6,7 +6,7 @@ Contains all of the information needed to perform a closed state transfer
 """
 # TODO need to decide whether or not we work with density matrices or pure states
 # in theory we can work with both and dispatch to the correct algorithm given the dimensions of the user input
-struct ClosedStateTransfer <: ClosedSystem
+mutable struct ClosedStateTransfer2 <: ClosedSystem
     control_Hamiltonians
     state_init # rho (?) 
     state_target

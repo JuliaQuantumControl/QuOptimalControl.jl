@@ -7,7 +7,7 @@ using QuantumInformation
 mutable struct ClosedStateTransferTest2 <: ClosedSystem
     control_Hamiltonians
     drift_Hamiltonians
-    state_init # rho (?) 
+    state_init
     state_target
     duration
     timestep
@@ -53,7 +53,6 @@ function solve(problem::ClosedSystem, alg)
 end
 
 sol = solve(prob, GRAPE)
-
 
 using Plots
 bar(sol.minimizer[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")

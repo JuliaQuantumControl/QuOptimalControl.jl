@@ -1,4 +1,4 @@
-# lets try our hand at recreating dynamo in Julia
+# lets try our hand at recreating dynamo in Julia at some point!
 
 
 function PSU_norm(v::Number)

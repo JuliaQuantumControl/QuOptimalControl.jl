@@ -1,6 +1,9 @@
 """
-store all of the algorithms
+a place where we can store all of the algorithms
 """
+
+include("./cost_functions.jl")
+
 
 
 """
@@ -11,22 +14,24 @@ end
 
 
 """
-Function that evaluates the figure of merit and computes the gradient, returned as a tuple I guess
+Function that is compatible with Optim.jl, takes Hamiltonians, states and some other information and returns either the value of the functional (in this case its an overlap) or a first order approximate of the gradient. 
 """
+# TODO - Shai has this Dynamo paper where he gives an exact gradient using the eigen function of the linear algebra library
+# TODO - How do we use this with a simple ensemble?
+# TODO - can we tidy it up and make it generically usable?
 function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_steps)
-    # x_init = reshape(x_init, (n_ctrls, n_steps))
     # compute the propgators
     U_list = pw_evolve_save(H_drift, H_ctrl_arr, x_drive, n_ctrls, dt, n_steps)
 
     # now we propagate the initial state forward in time
-    ρ_list = [ρ] # need to give it a type itρ
+    ρ_list = [ρ] # need to give it a type it ρ
     temp_state = ρ
     for U in U_list
         temp_state = U * temp_state * U'
         append!(ρ_list, [temp_state])
     end
 
-    ρₜ_list = [ρₜ]
+    ρₜ_list = [ρₜ] # can also type this or do something else
     temp_state = ρₜ
     for U in reverse(U_list)
         temp_state = U' * temp_state * U
@@ -46,7 +51,9 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
     # compute all of the 
     U = reduce(*, U_list)
     # now lets compute the infidelity to minimize
-    fid = 1.0 - abs2(tr(ρₜ * (U * ρ * U')))
+
+    fid = C1(ρₜ, (U * ρ * U'))
+    # fid = 1.0 - abs2(tr(ρₜ * (U * ρ * U')))
     
     if G !== nothing
         G .= grad

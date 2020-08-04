@@ -7,20 +7,25 @@ using Zygote
 sx = [0.0 + 0.0im 1.0 + 0.0im
       1.0 + 0.0im 0.0 + 0.0im]
 
+U0 = [1.0 + 0.0im 0.0 + 0.0im
+0.0 + 0.0im 1.0 + 0.0im]
+
 function series_exp(A)
-    u02 = Array{ComplexF64,2}(I(2))
-    u02 + (A + (A * A) / 2) # + ((A^3) / 6 + (A^4) / 24))
+    # u02 = Array{ComplexF64,2}(I(2))
+    
+    out = U0 + (A + (A * A) / 2) # + ((A^3) / 6 + (A^4) / 24))
 end
 
 function evolve(x)
     N = length(x)
-    U0 = Array{ComplexF64,2}(I(2))
+    # U0 = Array{ComplexF64,2}(I(2))
+    out = copy(U0)
     for i = 1:N
         ham = ((-1.0im * 0.1) * sx) * x[i] # there is an issue with this line
-        U0 = series_exp(ham) * U0
+        out = series_exp(ham) * out
         # U0 = exp(-1.0im * 0.1 * sx * x[i]) * U0
     end
-    U0
+    out
 end
 
 # define some states
@@ -35,8 +40,6 @@ end
 x_input = rand(10)
 functional(x_input)
 val, tape = Yota.itrace(functional, x_input)
-
-Zygote.gradient(functional, x_input)
 
 val, tape = Yota.itrace(functional, x_input)
 Yota.back!(tape)

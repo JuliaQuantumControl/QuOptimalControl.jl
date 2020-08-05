@@ -1,5 +1,7 @@
 # lets try our hand at recreating dynamo in Julia at some point!
 
+# this is all worked across from Shai's code
+
 
 function PSU_norm(v::Number)
     abs(v) / OC.config / normNorm

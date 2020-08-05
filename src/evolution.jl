@@ -11,7 +11,6 @@ function pw_evolve(problem)
 
 end
 
-
 """
 Given a set of Hamiltonians (drift and control) compute the evolution
 """

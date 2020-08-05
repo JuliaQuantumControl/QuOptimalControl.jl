@@ -83,6 +83,58 @@ end
 
 # implement dCRAB
 
+"""
+Using the dCRAB method to perform optimisation of a pulse. 
+
+The user here must provide a functional that we will optimise
+"""
+function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
+
+    # lets set up an ansatz that will currently be for Fourier series
+    ansatz(coeffs, ω, t) = coeffs[1] * cos(ω * t) + coeffs[2] * sin(ω * t)
+
+    # initially randomly chosen frequencies (can refine this later)
+    init_freq = rand(n_freq, n_pulses)
+
+    # not sure the best way to handle multiple pulses at the moment sadly
+    # we do this per pulse?
+    init_coeffs = rand(n_freq, n_coeff, n_pulses)
+
+    optimised_coeffs = []
+
+    pulses = [zeros(1, timeslices) for i in n_pulses]
+
+    pulse_time = 0:dt:duration - dt
+
+    # now we loop over everything
+
+    for i = 1:n_freq
+        freqs = init_freq[i, :] # so this contains the frequencies for all of the pulses
+
+        # wrap the user defined function, which should accept a list of pulses, ofc. it'll be 1dim if there's just one pulse
+        function to_minimize(x)
+            # copy pulses 
+            copy_pulses = copy(pulses)
+
+            # I find getting indices hard, want to divide up the array x into n_coeff chunks
+            first(j) = (j - 1) * n_coeff + 1
+            second(j) = j * n_coeff
+
+            [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+            user_func(copy_pulses)
+        end
+
+        # now optimise with nelder mead
+
+        result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
+
+        # update the pulses, save the coefficients
+        [pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+        append!(optimised_coeffs, [result.minimizer])
+    end
+    return optimised_coeffs, pulses
+
+end
 
 
 

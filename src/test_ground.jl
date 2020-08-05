@@ -81,14 +81,52 @@ n_coeff = 2 # number of coefficients
 # the users functional should take a drive as an input and return the infidelity
 function user_functional(x)
     # we get a list of pulses for now, so lets cat them into an array
-    U = pw_evolve(0 * sz, [sx, sy], vcat(x...), 1, dt, timeslices)
-    1 - C1(ρt, U * ρ1 * U')
+    U = pw_evolve(0 * sz, [π * sx, π * sy], vcat(x...), 1, dt, timeslices)
+    # U = reduce(*, U)
+    C1(ρt, (U * ρ1 * U'))
 end
 
-user_functional([rand(1, 10), rand(1, 10)])
+user_functional([rand(1, 10) .* 0, rand(1, 10) .* 0 .+ 1 / sqrt(2)])
 
 
+ansatz(coeffs, ω, t) = coeffs[1] * cos(ω * t) + coeffs[2] * sin(ω * t)
+init_freq = rand(n_freq, n_pulses)
+init_coeffs = rand(n_freq, n_coeff, n_pulses)
+optimised_coeffs = []
+pulses = [zeros(1, timeslices) for i = 1:n_pulses]
+pulse_time = 0:dt:duration - dt
+
+# working at a distinct freqs
+i = 1
+freqs = init_freq[i,:]
+
+function to_minimize(x)
+    copy_pulses = copy(pulses)
+    first(j) = (j - 1) * n_coeff + 1
+    second(j) = j * n_coeff
+
+    [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+    # user_func(copy_pulses)
+    user_functional(copy_pulses)
+end
+
+
+to_minimize(reshape(init_coeffs[1,:,:], 4))
+
+using Optim
+
+result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
+
+
+
+
+coeffs, pulses = dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_functional)
 # starting over from the a fresh repl
+
+controls = vcat(pulses...)
+using Plots
+bar(controls[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")
+bar!(controls[2, :], label = "2")
 
 function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
@@ -104,9 +142,12 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
     optimised_coeffs = []
 
-    pulses = [zeros(1, timeslices) for i in n_pulses]
+    pulses = [zeros(1, timeslices) for i = 1:n_pulses]
 
     pulse_time = 0:dt:duration - dt
+# I find getting indices hard, want to divide up the array x into n_coeff chunks
+    first(j) = (j - 1) * n_coeff + 1
+    second(j) = j * n_coeff
 
     # now we loop over everything
 
@@ -118,10 +159,7 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
             # copy pulses 
             copy_pulses = copy(pulses)
 
-            # I find getting indices hard, want to divide up the array x into n_coeff chunks
-            first(j) = (j - 1) * n_coeff + 1
-            second(j) = j * n_coeff
-
+            
             [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
             user_func(copy_pulses)
         end
@@ -131,7 +169,7 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
         result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
 
         # update the pulses, save the coefficients
-        [pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+        [pulses[j] += reshape(ansatz.((result.minimizer[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
         append!(optimised_coeffs, [result.minimizer])
     end
     return optimised_coeffs, pulses

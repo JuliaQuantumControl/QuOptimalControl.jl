@@ -12,6 +12,7 @@ Target-gate fidelity
 """
 function C1(KT, KN)
     D = size(KT)[1]
+    D = 1
     1 - abs2(tr(KT' * KN) / D)
 end
 

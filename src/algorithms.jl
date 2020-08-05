@@ -10,8 +10,16 @@ include("./tools.jl")
 
 """
 Simple. Use Zygote to solve all of our problems
+Ideally we can use Zygote for open system problems because one day it'll work with master equations and in the meantime its good at handling control flow
 """
 function ADGRAPE()
+end
+
+"""
+Learn Yota and use it to do AD because then things are fast and we can compile the tape and all that good stuff 
+"""
+function ADGRAPE()
+
 end
 
 
@@ -71,4 +79,10 @@ end
 # test = (F, G, x) -> GRAPE(F, G, 0 * sz, [sx, sy], ρ, ρₜ, x, n_ctrls, dt, n_steps)
 
 # res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
+
+
+# implement dCRAB
+
+
+
 

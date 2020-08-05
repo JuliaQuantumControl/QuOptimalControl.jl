@@ -57,3 +57,62 @@ sol = solve(prob, GRAPE)
 using Plots
 bar(sol.minimizer[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")
 bar!(sol.minimizer[2, :], label = "2")
+
+
+
+# implement dCRAB
+# okay so a few thoughts here, dCRAB optimises the coefficients of a Fourier series
+# traditionally it uses the Nelder-Mead algorithm to do this. 
+
+# had this idea last night about providing alg_options to the algorithms that's different to the information that we pass to the step taking algorithm, this is about the actual algorithm
+
+# testing params
+n_pulses = 1
+duration = 1
+timeslices = 10
+dt = 1 / 10
+
+
+# alg specific params
+n_freq = 10 # number of frequency components
+n_coeff = 2 # number of coefficients
+
+# lets create a little ansatz, can tidy this up to just make it vector * vector
+ansatz(coeffs, ω, t) = coeffs[1] * cos(ω * t) + coeffs[2] * sin(ω * t)
+
+
+# generate some random initial values, for each frequency we need n_coeffs
+
+# initial frequencies
+init_freq = rand(n_freq)
+
+# initial coefficients
+init_coeffs = rand(n_freq, n_coeff)
+
+# unsure how this should be stored really
+optimised_coeffs = []
+
+# previously evaluated pulse, this is the trick I think
+pulse = zeros(timeslices)
+
+pulse_time = 0:dt:duration
+# now lets set up the actual optimisation
+
+
+
+pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices)::T where T
+# for each frequency we perform the following procedure
+
+for (i, freq) in enumerate(init_freq)
+    
+
+    # we need to write this to be of the form func(x) = res
+
+
+    pulse = pulse + ansatz.(init_coeffs[i, :], freq, t)
+
+    pw_evolve(0 * sz, [sx], )
+end
+
+
+#

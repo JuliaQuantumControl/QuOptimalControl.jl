@@ -8,7 +8,8 @@ Contains all of the information needed to perform a closed state transfer
 # in theory we can work with both and dispatch to the correct algorithm given the dimensions of the user input
 mutable struct ClosedStateTransfer2 <: ClosedSystem
     control_Hamiltonians
-    state_init # rho (?) 
+    drift_Hamiltonians
+    state_init
     state_target
     duration
     timestep

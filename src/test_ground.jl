@@ -4,7 +4,7 @@ include("./algorithms.jl")
 using QuantumInformation
 
 
-mutable struct ClosedStateTransferTest2 <: ClosedSystem
+struct ClosedStateTransferTest2 <: ClosedSystem
     control_Hamiltonians
     drift_Hamiltonians
     state_init
@@ -67,7 +67,7 @@ bar!(sol.minimizer[2, :], label = "2")
 # had this idea last night about providing alg_options to the algorithms that's different to the information that we pass to the step taking algorithm, this is about the actual algorithm
 
 # testing params
-n_pulses = 1
+n_pulses = 2
 duration = 1
 timeslices = 10
 dt = 1 / 10
@@ -77,81 +77,69 @@ dt = 1 / 10
 n_freq = 10 # number of frequency components
 n_coeff = 2 # number of coefficients
 
-# lets create a little ansatz, can tidy this up to just make it vector * vector
-ansatz(coeffs, ω, t) = coeffs[1] * cos(ω * t) + coeffs[2] * sin(ω * t)
-
-# generate some random initial values, for each frequency we need n_coeffs
-
-# initial frequencies
-init_freq = rand(n_freq)
-
-# initial coefficients
-init_coeffs = rand(n_freq, n_coeff)
-
-# unsure how this should be stored really
-optimised_coeffs = []
-
-# previously evaluated pulse, this is the trick I think
-pulse = zeros(1,  timeslices)
-
-# now lets set up the actual optimisation
 
 # the users functional should take a drive as an input and return the infidelity
 function user_functional(x)
-    U = pw_evolve(0 * sz, [sx], x, 1, dt, timeslices)
+    # we get a list of pulses for now, so lets cat them into an array
+    U = pw_evolve(0 * sz, [sx, sy], vcat(x...), 1, dt, timeslices)
     1 - C1(ρt, U * ρ1 * U')
 end
 
-user_functional(rand(1, 10))
+user_functional([rand(1, 10), rand(1, 10)])
 
-# for each frequency we perform the following procedure, we assume some given functional by the user
-# we wrap the user given functional in a little bit of code to track things
-for (i, freq) in enumerate(init_freq)
-    pulse_time = 0:dt:duration - dt # fix this I guess
 
-    # since we use NM to optimise only the coefficients
-    # pulse = pulse + ansatz.(init_coeffs[i, :], freq, t)
+# starting over from the a fresh repl
 
-    function to_minimizer(x)
-        # what comes in here is from Nelder Mead
-        
-        # firstly lets create an internal copy of the pulse as it exists just now
-        test_pulse = copy(pulse)
-        test_pulse += ansatz.(x, freq, pulse_time)
-        user_functional(test_pulse)
+function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
+
+    # lets set up an ansatz that will currently be for Fourier series
+    ansatz(coeffs, ω, t) = coeffs[1] * cos(ω * t) + coeffs[2] * sin(ω * t)
+
+    # initially randomly chosen frequencies (can refine this later)
+    init_freq = rand(n_freq, n_pulses)
+
+    # not sure the best way to handle multiple pulses at the moment sadly
+    # we do this per pulse?
+    init_coeffs = rand(n_freq, n_coeff, n_pulses)
+
+    optimised_coeffs = []
+
+    pulses = [zeros(1, timeslices) for i in n_pulses]
+
+    pulse_time = 0:dt:duration - dt
+
+    # now we loop over everything
+
+    for i = 1:n_freq
+        freqs = init_freq[i, :] # so this contains the frequencies for all of the pulses
+
+        # wrap the user defined function, which should accept a list of pulses, ofc. it'll be 1dim if there's just one pulse
+        function to_minimize(x)
+            # copy pulses 
+            copy_pulses = copy(pulses)
+
+            # I find getting indices hard, want to divide up the array x into n_coeff chunks
+            first(j) = (j - 1) * n_coeff + 1
+            second(j) = j * n_coeff
+
+            [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+            user_func(copy_pulses)
+        end
+
+        # now optimise with nelder mead
+
+        result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
+
+        # update the pulses, save the coefficients
+        [pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+        append!(optimised_coeffs, [result.minimizer])
     end
-
-    # now we optimise
-    res = Optim.optimize(to_minimizer, init_coeffs[i, :], Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
-
-    # we need some sort of rejection here but.... assuming for now that it succeeds in optimising
-
-    # then we can firstly store the result
-    append!(optimised_coeffs, [res.minimizer])
-
-    # but also update the pulse
-    pulse += reshape(ansatz.(res.minimizer, freq, pulse_time), 1, 10)
+    return optimised_coeffs, pulses
 
 end
 
-# lets step through it
-
-i, freq = 1, init_freq[1]
-pulse_time = 0:dt:duration - dt
-function to_minimizer(x)
-    # what comes in here is from Nelder Mead
-    
-    test_pulse = copy(pulse)
-    @show (x,)
-    test_pulse += reshape(ansatz.((x,), freq, pulse_time), (1, 10))
-    user_functional(test_pulse)
-end
 
 
 
-result = Optim.optimize(to_minimizer, init_coeffs[i, :], Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
 
-pulse += ansatz.(result.minimizer, freq, pulse_time)
 
-# what does dCRAB actually entail? 
-# use nelder mead to optimise some coefficients, you need to provide it a handwritten functional, that functional should return the infidelity

@@ -2,18 +2,7 @@ include("./problems.jl")
 include("./algorithms.jl")
 
 using QuantumInformation
-
-
-struct ClosedStateTransferTest2 <: ClosedSystem
-    control_Hamiltonians
-    drift_Hamiltonians
-    state_init
-    state_target
-    duration
-    timestep
-    timeslices
-    number_pulses
-end
+using DelimitedFiles
 
 ψ1 = [1.0 + 0.0im 0.0]
 ψt = [0.0 + 0.0im 1.0]
@@ -22,7 +11,7 @@ end
 ρt = ψt' * ψt
 
 # need to figure out how keyword constructors work
-prob = ClosedStateTransferTest2(
+prob = ClosedStateTransfer(
     [sx, sy],
     [0.0 * sz],
     ρ1,
@@ -81,8 +70,28 @@ function user_functional(x)
     C1(ρt, (U * ρ1 * U'))
 end
 
+"""
+Dummy function that simply saves a random number in the result.txt file
+"""
+function start_exp()
+    open("result.txt", "w") do io
+        writedlm(io, rand())
+    end
+end
+
+"""
+Example functional for closed loop optimal control using dCRAB
+"""
 function user_functional_expt(x)
     # we get a 2D array of pulses, with delimited files we can write this to a file
+    # writedlm("./")
+    open("pulses.txt", "w") do io
+        writedlm(io, x')
+    end
+    # then lets imagine we use PyCall or something to start exp
+    start_exp()
+    # then read in the result
+    infid = readdlm("result.txt")[1]
 end
 
 

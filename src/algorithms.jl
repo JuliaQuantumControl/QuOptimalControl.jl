@@ -91,12 +91,13 @@ The user here must provide a functional that we will optimise
 function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
     # lets set up an ansatz that will currently be for Fourier series
+    # lets also refactor our ansatz
     ansatz(coeffs, ω, t) = coeffs[1] * cos(ω * t) + coeffs[2] * sin(ω * t)
 
     # initially randomly chosen frequencies (can refine this later)
     init_freq = rand(n_freq, n_pulses)
 
-    # not sure the best way to handle multiple pulses at the moment sadly
+    # not sure the best way to handle multiple pulses at the moment sadly, but this method seems to work
     # we do this per pulse?
     init_coeffs = rand(n_freq, n_coeff, n_pulses)
 
@@ -106,22 +107,25 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
     pulse_time = 0:dt:duration - dt
 
+
+    first(j) = (j - 1) * n_coeff + 1
+    second(j) = j * n_coeff
+
+
     # now we loop over everything
 
     for i = 1:n_freq
         freqs = init_freq[i, :] # so this contains the frequencies for all of the pulses
-
-        # wrap the user defined function, which should accept a list of pulses, ofc. it'll be 1dim if there's just one pulse
+        
+        # wrap the user defined function so that we can convert a list of coefficients into a pulse, user function should simply take an input 2D array and return the infidelity
         function to_minimize(x)
             # copy pulses 
             copy_pulses = copy(pulses)
 
             # I find getting indices hard, want to divide up the array x into n_coeff chunks
-            first(j) = (j - 1) * n_coeff + 1
-            second(j) = j * n_coeff
 
             [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
-            user_func(copy_pulses)
+            user_func(vcat(copy_pulses...))
         end
 
         # now optimise with nelder mead
@@ -129,11 +133,12 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
         result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
 
         # update the pulses, save the coefficients
-        [pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+        [pulses[j] += reshape(ansatz.((result.minimizer[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+
+        # depending on the fidelity we should break here
         append!(optimised_coeffs, [result.minimizer])
     end
     return optimised_coeffs, pulses
-
 end
 
 

@@ -1,14 +1,52 @@
 # QuOptimalControl
 
+Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 
-Quantum optimal control but with a better name and more thought put into it... Merge with what we have from Thomas already? Essentially this naming convention is good because it matches the quantum github.
+Julia is the perfect language to develop these tools in because:
+1. it's easy to express mathematics in
+2. it's really fast and thats what we care about
+3. multiple dispatch makes it easy to code in
+4. Python is inflexible (see multiple dispatch and speed)
+5. The automatic differentiation tooling is really good and improving quickly
+
+This package is a rework of the OCToolbox.jl package but with extra functionality, and more algorithms.
+
+
+**Current status: very WIP!**
 
 ## MVP
-- GRAPE
-- GOAT
-- CRAB
-- Krotov
-- GROUP
+What I consider the requirements for a minimimum viable package!
+
+We need to be able to use all of the following algorithms in both open and closed systems efficiently.
+
+### GRAPE
+
+**Citation needed**
+
+Algorithm originally developed by the Glaser group, approximate gradient implementation is already here. Exact gradients from the Dynamo package need to be implemented for all of the cases of interest
+
+#### ADGRAPE
+
+David Schuster's lab pioneered this idea, essentially use autodiff to compute the gradient of the functional so that you can follow it. Really simple with Zygote but its pretty memory hungry, we can make this more efficient.
+
+Also want to implement it using Yota.jl because it seems that it's pretty optimised for speed. (We can use Zygote as the fallback for the open system case)
+
+### GOAT
+
+Shai's new algorithm, given the ability of DiffEq.jl we should be able to have the fastest version of this code.
 
 
+### dCRAB
+
+Fourier (or other basis) expansion of pulse and then optimisation of coefficients using Nelder-Mead. Currently seems to work.
+
+**Remote usage** should be possible with this package, see the example where the user defined function simply saves a pulse and then runs some experiment before returning something.
+
+### Krotov
+
+Monotonic convergence is the name of the game here, not sure that I have the skills to implement it but since I'm a member of QuSCo it's important!
+
+### GROUP
+
+Jacob Sherson's group used gradient optimisation of the coefficients of a dCRAB expansion. Impressive work and curious if it's easy to implement, especially given how easy it is to use Zygote. 
 

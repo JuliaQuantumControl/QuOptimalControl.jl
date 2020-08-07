@@ -15,4 +15,5 @@ struct ClosedStateTransfer <: ClosedSystem
     timestep
     timeslices
     number_pulses
+    alg # choose from the struct atm
 end

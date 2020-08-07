@@ -1,12 +1,23 @@
+abstract type algorithm end # capitalisation?
+abstract type gradientBased <: algorithm end # Phlia and I always talked about building up a list of algorithms under their types
+abstract type gradientFree <: algorithm end
+
 """
-a place where we can store all of the algorithms
+Testing a little idea, things are becoming a little confused. Need to write down what the ultimate goal is
+# TODO I think we can implement the algorithms as structs that way we can dispatch on them properly
 """
+struct GRAPE_approx <: gradientBased
+    func_to_call # currently we'll just store the function associated with the algorithm
+end
+
+struct dCRAB_type <: gradientFree
+    func_to_call
+end
+
 
 include("./cost_functions.jl")
 include("./evolution.jl")
 include("./tools.jl")
-
-
 
 """
 Simple. Use Zygote to solve all of our problems
@@ -58,7 +69,7 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
         end
     end
     
-    # compute all of the 
+    # compute total propagator
     U = reduce(*, U_list)
     # now lets compute the infidelity to minimize
 
@@ -80,9 +91,6 @@ end
 
 # res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
 
-
-# implement dCRAB
-
 """
 Using the dCRAB method to perform optimisation of a pulse. 
 
@@ -103,11 +111,11 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
     optimised_coeffs = []
 
-    pulses = [zeros(1, timeslices) for i in n_pulses]
+    pulses = [zeros(1, timeslices) for i = 1:n_pulses]
 
     pulse_time = 0:dt:duration - dt
 
-
+    # functions for computing indices becaues I find them hard
     first(j) = (j - 1) * n_coeff + 1
     second(j) = j * n_coeff
 
@@ -123,13 +131,11 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
             copy_pulses = copy(pulses)
 
             # I find getting indices hard, want to divide up the array x into n_coeff chunks
-
             [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
             user_func(vcat(copy_pulses...))
         end
 
         # now optimise with nelder mead
-
         result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
 
         # update the pulses, save the coefficients

@@ -39,7 +39,7 @@ sol = solve(prob_GRAPE)
 Then we can analyse the output pulse that is returned!
 
 ## Functionality
-* Create a closed system problem using a piecewise control and solve using GRAPE (approx. gradients) or dCRAB
+* Create a closed system problem using a piecewise control and solve using GRAPE (approx. gradients and autodiff) or dCRAB
 * Closed loop optimisation (at own risk) using dCRAB
 * See Examples.jl for examples!
 

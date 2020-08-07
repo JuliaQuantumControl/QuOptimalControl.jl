@@ -11,7 +11,7 @@ using DelimitedFiles
 ρt = ψt' * ψt
 
 # need to figure out how keyword constructors work
-prob = ClosedStateTransfer(
+prob_GRAPE = ClosedStateTransfer(
     [sx, sy],
     [0.0 * sz],
     ρ1,
@@ -20,7 +20,22 @@ prob = ClosedStateTransfer(
     1 / 10,
     10,
     2,
+    GRAPE_approx(GRAPE)
 )
+
+
+prob_dCRAB = ClosedStateTransfer(
+    [sx, sy],
+    [0.0 * sz],
+    ρ1,
+    ρt,
+    1.0,
+    1 / 10,
+    10,
+    2,
+    dCRAB_type(dCRAB)
+)
+
 
 sol = solve(prob, GRAPE)
 

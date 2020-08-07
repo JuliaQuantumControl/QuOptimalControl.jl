@@ -11,6 +11,8 @@ struct GRAPE_approx <: gradientBased
 end
 
 struct dCRAB_type <: gradientFree
+    n_coeff
+    n_freq
     func_to_call
 end
 

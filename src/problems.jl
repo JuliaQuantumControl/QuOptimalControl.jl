@@ -21,6 +21,7 @@ Contains all of the information needed to perform a closed state transfer
     timestep = 0.1
     timeslices = 10
     number_pulses = 1
+    n_ensemble = 1
     alg = nothing# choose from the struct atm
 end
 

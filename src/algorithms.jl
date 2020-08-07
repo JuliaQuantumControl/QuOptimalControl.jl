@@ -1,26 +1,30 @@
+# Phlia and I always talked about building up a list of algorithms under their types
 abstract type algorithm end # capitalisation?
-abstract type gradientBased <: algorithm end # Phlia and I always talked about building up a list of algorithms under their types
+abstract type gradientBased <: algorithm end 
 abstract type gradientFree <: algorithm end
+
+using Zygote
+using Optim
 
 import Base.@kwdef
 
 """
-Testing a little idea, things are becoming a little confused. Need to write down what the ultimate goal is
+Structs here will replace the functions below I think, so that we can dispatch on them, need to figure this one out before continuing.
 # TODO I think we can implement the algorithms as structs that way we can dispatch on them properly
 """
 @kwdef struct GRAPE_approx <: gradientBased
     func_to_call = GRAPE # currently we'll just store the function associated with the algorithm
 end
-# GRAPE_approx() = GRAPE_approx(GRAPE)
+
+@kwdef struct GRAPE_AD <: gradientBased
+    func_to_call = ADGRAPE
+end
 
 @kwdef struct dCRAB_type <: gradientFree
     n_coeff = 2
     n_freq = 2
     func_to_call = dCRAB
 end
-# define some outer constructors that provide some default values information
-# dCRAB_type() = dCRAB_type(2, 2, dCRAB)
-
 
 include("./cost_functions.jl")
 include("./evolution.jl")
@@ -28,9 +32,16 @@ include("./tools.jl")
 
 """
 Simple. Use Zygote to solve all of our problems
-Ideally we can use Zygote for open system problems because one day it'll work with master equations and in the meantime its good at handling control flow
+Compute the gradient of a functional f(x) wrt. x
 """
-function ADGRAPE()
+function ADGRAPE(functional, x)
+
+    function grad_functional!(G, x)
+        G .= Zygote.gradient(functional, x)[1]
+    end
+    
+    res = optimize(functional, grad_functional!, x, LBFGS(), Optim.Options(show_trace = true, store_trace = true))
+
 end
 
 """
@@ -42,7 +53,7 @@ end
 
 
 """
-Function that is compatible with Optim.jl, takes Hamiltonians, states and some other information and returns either the value of the functional (in this case its an overlap) or a first order approximate of the gradient. 
+Function that is compatible with Optim.jl, takes Hamiltonians, states and some other information and returns either the value of the functional (in this case its an overlap) or a first order approximation of the gradient. Here we don't explicitly solve the problem using Optim, that's handled elsewhere for now (which might need changed).
 """
 # TODO - Shai has this Dynamo paper where he gives an exact gradient using the eigen function of the linear algebra library
 # TODO - How do we use this with a simple ensemble?
@@ -81,7 +92,6 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
     # now lets compute the infidelity to minimize
 
     fid = C1(ρₜ, (U * ρ * U'))
-    # fid = 1.0 - abs2(tr(ρₜ * (U * ρ * U')))
     
     if G !== nothing
         G .= grad
@@ -96,7 +106,7 @@ end
 """
 Using the dCRAB method to perform optimisation of a pulse. 
 
-The user here must provide a functional that we will optimise
+The user here must provide a functional that we will optimise, optimisation is carried out here
 """
 function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
@@ -121,12 +131,12 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
     # functions for computing indices becaues I find them hard
     first(j) = (j - 1) * n_coeff + 1
     second(j) = j * n_coeff
-    
+
     # now we loop over everything
 
     for i = 1:n_freq
         freqs = init_freq[i, :] # so this contains the frequencies for all of the pulses
-        
+
         # wrap the user defined function so that we can convert a list of coefficients into a pulse, user function should simply take an input 2D array and return the infidelity
         function to_minimize(x)
             # copy pulses 

@@ -1,6 +1,4 @@
-include("./problems.jl")
-include("./algorithms.jl")
-include("./solve.jl")
+using QuOptimalControl
 
 using QuantumInformation
 using DelimitedFiles
@@ -25,6 +23,21 @@ prob_GRAPE = ClosedStateTransfer(
 
 sol = solve(prob_GRAPE)
 
+
+prob_ADGRAPE = ClosedStateTransfer(
+    [sx, sy],
+    [0.0 * sz],
+    ρ1,
+    ρt,
+    1.0,
+    1 / 10,
+    10,
+    2,
+    GRAPE_AD()
+)
+
+sol = solve(prob_ADGRAPE)
+
 prob_dCRAB = ClosedStateTransfer(
     [sx, sy],
     [0.0 * sz],
@@ -46,10 +59,6 @@ bar!(sol.minimizer[2, :], label = "2")
 
 
 sol = solve(prob_dCRAB)
-
-
-# had this idea last night about providing alg_options to the algorithms that's different to the information that we pass to the step taking algorithm, this is about the actual algorithm
-
 
 # the users functional should take a drive as an input and return the infidelity
 function user_functional(x)

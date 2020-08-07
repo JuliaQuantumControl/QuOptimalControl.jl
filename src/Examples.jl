@@ -1,5 +1,6 @@
 include("./problems.jl")
 include("./algorithms.jl")
+include("./solve.jl")
 
 using QuantumInformation
 using DelimitedFiles
@@ -10,7 +11,6 @@ using DelimitedFiles
 ρ1 = ψ1' * ψ1
 ρt = ψt' * ψt
 
-# need to figure out how keyword constructors work
 prob_GRAPE = ClosedStateTransfer(
     [sx, sy],
     [0.0 * sz],
@@ -33,15 +33,18 @@ prob_dCRAB = ClosedStateTransfer(
     1 / 10,
     10,
     2,
-    dCRAB_type(dCRAB)
+    dCRAB_type()
 )
 
 
-sol = solve(prob, GRAPE)
+sol = solve(prob_GRAPE)
 
 using Plots
 bar(sol.minimizer[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")
 bar!(sol.minimizer[2, :], label = "2")
+
+
+sol = solve(prob_dCRAB)
 
 
 # had this idea last night about providing alg_options to the algorithms that's different to the information that we pass to the step taking algorithm, this is about the actual algorithm

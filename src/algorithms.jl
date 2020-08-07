@@ -2,19 +2,24 @@ abstract type algorithm end # capitalisation?
 abstract type gradientBased <: algorithm end # Phlia and I always talked about building up a list of algorithms under their types
 abstract type gradientFree <: algorithm end
 
+import Base.@kwdef
+
 """
 Testing a little idea, things are becoming a little confused. Need to write down what the ultimate goal is
 # TODO I think we can implement the algorithms as structs that way we can dispatch on them properly
 """
-struct GRAPE_approx <: gradientBased
-    func_to_call # currently we'll just store the function associated with the algorithm
+@kwdef struct GRAPE_approx <: gradientBased
+    func_to_call = GRAPE # currently we'll just store the function associated with the algorithm
 end
+# GRAPE_approx() = GRAPE_approx(GRAPE)
 
-struct dCRAB_type <: gradientFree
-    n_coeff
-    n_freq
-    func_to_call
+@kwdef struct dCRAB_type <: gradientFree
+    n_coeff = 2
+    n_freq = 2
+    func_to_call = dCRAB
 end
+# define some outer constructors that provide some default values information
+# dCRAB_type() = dCRAB_type(2, 2, dCRAB)
 
 
 include("./cost_functions.jl")

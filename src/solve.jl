@@ -1,3 +1,4 @@
+using Optim
 """
 Contains the solve function interfaces for now, until I learn a better way to do it
 """
@@ -35,11 +36,11 @@ function _solve(problem::ClosedStateTransfer, alg::dCRAB_type)
     
     function user_functional(x)
         # we get an a 2D array of pulses
-        U = pw_evolve(problem.drift_Hamiltonians, problem.control_Hamiltonians, x, problem.number_pulses, problem.timestep, problem.timeslices)
+        U = pw_evolve(problem.drift_Hamiltonians[1], problem.control_Hamiltonians, x, problem.number_pulses, problem.timestep, problem.timeslices)
         # U = reduce(*, U)
         C1(problem.state_target, (U * problem.state_init * U'))
     end
-    
+
     coeffs, pulses = dCRAB(problem.number_pulses, problem.timestep, problem.timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
     
 end

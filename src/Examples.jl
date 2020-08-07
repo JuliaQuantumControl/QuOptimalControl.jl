@@ -49,17 +49,6 @@ sol = solve(prob_dCRAB)
 
 # had this idea last night about providing alg_options to the algorithms that's different to the information that we pass to the step taking algorithm, this is about the actual algorithm
 
-# testing params
-n_pulses = 2
-duration = 1
-timeslices = 10
-dt = 1 / 10
-
-
-# alg specific params
-n_freq = 10 # number of frequency components
-n_coeff = 2 # number of coefficients
-
 
 # the users functional should take a drive as an input and return the infidelity
 function user_functional(x)

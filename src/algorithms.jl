@@ -93,11 +93,6 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
 
 end
 
-# using Optim
-# test = (F, G, x) -> GRAPE(F, G, 0 * sz, [sx, sy], ρ, ρₜ, x, n_ctrls, dt, n_steps)
-
-# res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
-
 """
 Using the dCRAB method to perform optimisation of a pulse. 
 
@@ -117,6 +112,7 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
     init_coeffs = rand(n_freq, n_coeff, n_pulses)
 
     optimised_coeffs = []
+    optim_results = [] # you do 1NM search per super iteration so you need to keep track of that
 
     pulses = [zeros(1, timeslices) for i = 1:n_pulses]
 
@@ -125,8 +121,7 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
     # functions for computing indices becaues I find them hard
     first(j) = (j - 1) * n_coeff + 1
     second(j) = j * n_coeff
-
-
+    
     # now we loop over everything
 
     for i = 1:n_freq
@@ -150,8 +145,9 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
 
         # depending on the fidelity we should break here
         append!(optimised_coeffs, [result.minimizer])
+        append!(optim_results, [result])
     end
-    return optimised_coeffs, pulses
+    return optimised_coeffs, pulses, optim_results
 end
 
 

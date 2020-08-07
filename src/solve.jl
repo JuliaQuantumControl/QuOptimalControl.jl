@@ -1,7 +1,18 @@
+abstract type Solution end
 using Optim
 """
 Contains the solve function interfaces for now, until I learn a better way to do it
 """
+
+"""
+The SolutionResult stores important optimisation information in a nice format
+"""
+struct SolutionResult <: Solution
+    result # optimisation result
+    fidelity # lets just extract the figure of merit that was reached
+    optimised_pulses # store an array of the optimised pulses
+    problem_info # can we store the struct or some BSON of the struct that was originally used
+end
 
 
 
@@ -25,11 +36,15 @@ function _solve(problem::ClosedStateTransfer, alg::GRAPE_approx)
     init = rand(problem.number_pulses, problem.timeslices) .* 0.01
 
     res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
-    return res
+    # TODO we need to decide on a common appearance for these SolutionResult structs
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+
+    return solres
 end
 
 """
-ClosedSystem using dCRAB to solve
+ClosedSystemStateTransfer using dCRAB to solve the problem
+Here we define a functional for the user, since we can assume that this is the type of problem that they want to solve
 """
 function _solve(problem::ClosedStateTransfer, alg::dCRAB_type)
     # we define our own functional here for a closed system
@@ -41,12 +56,14 @@ function _solve(problem::ClosedStateTransfer, alg::dCRAB_type)
         C1(problem.state_target, (U * problem.state_init * U'))
     end
 
-    coeffs, pulses = dCRAB(problem.number_pulses, problem.timestep, problem.timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(problem.number_pulses, problem.timestep, problem.timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+
+    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
     
 end
 
 """
-Optimising an experiment here, using dCRAB should work closed loop I hope
+Closed loop experiment optimisation using dCRAB, the user functional isn't defined by the user at the moment, instead we define it. 
 """
 function _solve(problem::Experiment, alg::dCRAB_type)
     """
@@ -65,6 +82,8 @@ function _solve(problem::Experiment, alg::dCRAB_type)
         infid = readdlm(problem.infidelity_path)[1]
     end
 
-    coeffs, pulses = dCRAB(problem.number_pulses, problem.timestep, problem.timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(problem.number_pulses, problem.timestep, problem.timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+
+    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
     
 end

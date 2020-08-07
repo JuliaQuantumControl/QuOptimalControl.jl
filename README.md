@@ -2,6 +2,49 @@
 
 Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 
+**Current status: very WIP!**
+
+## Usage
+
+Trying to mimic the interface that DifferentialEquations.jl uses we offer several problem definitions. Problems define the dynamics of the quantum system.
+
+Included in the problem definition (for now) are some algorithm options to tune the algorithms. 
+
+Once a problem has been constructed and an algorithm tuned we can simply solve the problem and through the wonders of multiple dispatch the code should just work!
+
+```julia
+using QuantumInformation
+
+ψ1 = [1.0 + 0.0im 0.0]
+ψt = [0.0 + 0.0im 1.0]
+
+ρ1 = ψ1' * ψ1
+ρt = ψt' * ψt
+
+prob_GRAPE = ClosedStateTransfer(
+    [sx, sy],
+    [0.0 * sz],
+    ρ1,
+    ρt,
+    1.0,
+    1 / 10,
+    10,
+    2,
+    GRAPE_approx(GRAPE)
+)
+
+sol = solve(prob_GRAPE)
+```
+
+Then we can analyse the output pulse that is returned!
+
+## Functionality
+* Create a closed system problem using a piecewise control and solve using GRAPE (approx. gradients) or dCRAB
+* Closed loop optimisation (at own risk) using dCRAB
+* See Examples.jl for examples!
+
+## Why Julia?
+
 Julia is the perfect language to develop these tools in because:
 1. it's easy to express mathematics in
 2. it's really fast and thats what we care about
@@ -11,8 +54,6 @@ Julia is the perfect language to develop these tools in because:
 
 This package is a rework of the OCToolbox.jl package but with extra functionality, and more algorithms.
 
-
-**Current status: very WIP!**
 
 ## MVP
 What I consider the requirements for a minimimum viable package!

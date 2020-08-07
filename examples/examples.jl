@@ -23,6 +23,7 @@ prob_GRAPE = ClosedStateTransfer(
     GRAPE_approx(GRAPE)
 )
 
+sol = solve(prob_GRAPE)
 
 prob_dCRAB = ClosedStateTransfer(
     [sx, sy],
@@ -37,7 +38,7 @@ prob_dCRAB = ClosedStateTransfer(
 )
 
 
-sol = solve(prob_GRAPE)
+sol = solve(prob_dCRAB)
 
 using Plots
 bar(sol.minimizer[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")

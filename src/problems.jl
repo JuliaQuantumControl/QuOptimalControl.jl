@@ -36,5 +36,6 @@ Working with an experiment
     start_exp # function to start exp
     pulse_path = ""
     infidelity_path = ""
+    timeout = 10
     alg
 end

@@ -1,5 +1,7 @@
 abstract type Solution end
 using Optim
+using FileWatching
+
 """
 Contains the solve function interfaces for now, until I learn a better way to do it
 """
@@ -41,6 +43,9 @@ function _solve(problem::ClosedStateTransfer, alg::GRAPE_approx)
     return solres
 end
 
+"""
+Solve closed state transfer problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
+"""
 function _solve(problem::ClosedStateTransfer, alg::GRAPE_AD)
     function user_functional(x)
         U = pw_evolve_T(problem.drift_Hamiltonians[1], problem.control_Hamiltonians, x, problem.number_pulses, problem.timestep, problem.timeslices)
@@ -88,6 +93,7 @@ function _solve(problem::Experiment, alg::dCRAB_type)
         end
         # TODO you need to wait can use built in FileWatching function 
         problem.start_exp()
+        o = watch_file(problem.infidelity_path, problem.timeout) # might need to monitor this differently
 
         # then read in the result
         infid = readdlm(problem.infidelity_path)[1]

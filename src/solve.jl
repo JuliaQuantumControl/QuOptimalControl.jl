@@ -47,9 +47,10 @@ end
 Solve closed state transfer problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
 function _solve(problem::ClosedStateTransfer, alg::GRAPE_AD)
+    
     function user_functional(x)
         U = pw_evolve_T(problem.drift_Hamiltonians[1], problem.control_Hamiltonians, x, problem.number_pulses, problem.timestep, problem.timeslices)
-        C1(problem.state_target, (U * problem.state_init * U'))
+        C2(problem.state_target, (U * problem.state_init * U'))
     end
 
     init = rand(problem.number_pulses, problem.timeslices) .* 0.01
@@ -87,7 +88,6 @@ function _solve(problem::Experiment, alg::dCRAB_type)
     """
     function user_functional(x)
         # we get a 2D array of pulses, with delimited files we can write this to a file
-        # writedlm("./")
         open(problem.pulse_path, "w") do io
             writedlm(io, x')
         end

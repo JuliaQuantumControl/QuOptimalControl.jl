@@ -25,6 +25,10 @@ Contains all of the information needed to perform a closed state transfer
     alg = nothing# choose from the struct atm
 end
 
+# gate syntehsis closed open ClosedSystem
+# closed state trnasfer -> Shai exact gradient
+# state transfer open system
+
 """
 Working with an experiment
 """

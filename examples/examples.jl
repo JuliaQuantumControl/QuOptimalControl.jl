@@ -18,10 +18,16 @@ prob_GRAPE = ClosedStateTransfer(
     1 / 10,
     10,
     2,
+    1,
     GRAPE_approx(GRAPE)
 )
 
 sol = solve(prob_GRAPE)
+
+function test_x(x)
+    # real value return
+end
+GRAPE_AD(test_x, rand(2, 10))
 
 
 prob_ADGRAPE = ClosedStateTransfer(
@@ -33,6 +39,7 @@ prob_ADGRAPE = ClosedStateTransfer(
     1 / 10,
     10,
     2,
+    1,
     GRAPE_AD()
 )
 
@@ -47,6 +54,7 @@ prob_dCRAB = ClosedStateTransfer(
     1 / 10,
     10,
     2,
+    1,
     dCRAB_type()
 )
 
@@ -92,8 +100,12 @@ function user_functional_expt(x)
     infid = readdlm("result.txt")[1]
 end
 
-
-coeffs, pulses = dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_functional)
+dt = 1 / 10
+duration  = 1
+timeslices = 10
+n_freq = 1
+n_coeff = 2
+coeffs, pulses = dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_functional_expt)
 # starting over from the a fresh repl
 
 controls = vcat(pulses...)

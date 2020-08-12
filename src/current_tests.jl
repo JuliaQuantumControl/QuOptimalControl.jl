@@ -18,6 +18,8 @@ X_initial = [1.0 + 0im, 0.0]# pure states to start with
 X_target = [0.0, 1.0 + 0.0im]
 norm2 = 1.0
 
+X_initial = X_initial * X_initial'
+X_target = X_target * X_target'
 
 # since we can dispatch based on the type of the system then we can assume that we know 1. which error func to use and also 2. which method for gradient
 
@@ -35,14 +37,40 @@ init = rand(n_controls, timeslices) # should allow some control over this
 
 
 ctrl = copy(init)
-# loop ove ensembel of systems
+
+# might define elsewhere, will also define the length [ timeslices + 1, ensemble]
+U = repeat([similar(X_initial)], timeslices + 1, n_ensemble)
+L = repeat([similar(X_target)], timeslices + 1, n_ensemble)
+H_list # same except only timeslices long
+P_list # as above
+g = zeros(n_ensemble)
+
+# loop over ensemble of systems
+k = 1
+U[1,k] = X_initial
+L[end, k] = X_target
+
+
 # compute the generators
-H_list = pw_ham_save(A[1], B, ctrl, n_controls, duration / timeslices, timeslices) .* -1.0im
-
+H_list = pw_ham_save(A[k], B, ctrl, n_controls, duration / timeslices, timeslices) .* -1.0im
 # now we compute the matrix exponential, here we can cheat a bit, or we don't... depending on whats faster
-U_list = exp.(H_list)
-# U_list = [expm_exact_gradient(i, duration / timeslices) for i in H_list]
+P_list = exp.(H_list)
+# P_list = [expm_exact_gradient(i, duration / timeslices) for i in H_list]
+# ULMIXED
+# and now we propagate stuff
+for t = 1:timeslices
+    # P_list here needs a k
+    U[t + 1, k] = P_list[t] * U[t] * P_list[t]'
+end
 
+for t = reverse(1:timeslices)
+    L[t, k] = P_list[t]' * L[t + 1, k] * P_list[t]
+end
+
+# here it doesnt matter where we compute the error in time
+g_ind = 1
+# now we want to compute the error
+g[k] = real(trace_matmul(L[g_ind, k], U[g_ind, k]))
 
 
 test = expm_exact_gradient(H_list[1], duration / timeslices)
@@ -54,13 +82,13 @@ test
 """
 error function and gradient for closed systems
 """
-function error_abs()
+    function error_abs()
     # we need to compute the value of g, defined as the trace matmul over U and K
-end
+    end
 
 # should be ready to run the optimisation now
 
-println("stop you violated the law, pay the court a fine or serve your sentence")
+    println("stop you violated the law, pay the court a fine or serve your sentence")
 
 # # task 1 closed system unitary gate synthesis up to a global phase
 # using QuantumInformation

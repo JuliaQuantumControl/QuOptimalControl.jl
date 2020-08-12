@@ -51,3 +51,14 @@ function expm_exact_gradient(H::T, dt)::T where T
 
     v * diagm(exp_d) * v'
 end
+
+"""
+Copied from Ville's code, seems to be slower in Julia
+Function to compute trace(A @ B) efficiently.
+
+Utilizes the identity trace(A @ B) == sum(transpose(A) * B).
+Left side is O(n^3) to compute, right side is O(n^2).
+"""
+function trace_matmul(A, B)
+    sum(transpose(A) .* B)
+end

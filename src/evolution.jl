@@ -59,3 +59,20 @@ function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, 
     end
     out
 end
+
+
+
+"""
+Function to compute the Hamiltonians for a piecewise constant control and save them. This is useful in many stages
+"""
+function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T
+    D = size(H₀)[1] # get dimension of the system
+    K = n_pulses
+    out = []
+    U0 = SMatrix{D,D,ComplexF64}(I(2))
+    for i = 1:timeslices
+        Htot = SMatrix{D,D,ComplexF64}(H₀ + sum(Hₓ_array .* x_arr[:, i]))
+        append!(out, [Htot])
+    end
+    out
+end

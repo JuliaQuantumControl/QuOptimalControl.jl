@@ -17,7 +17,9 @@ function save(solres)
 end
 
 """
-Based directly on Ville's code. Types are an issue here
+Compute the eigen decomposition of a generator matrix G. Based on work by both Shai Machnes and Ville Bergholm.
+
+Types are an issue here.
 """
 function eig_factors(G; antihermitian = false, tol = 1e-10)
     if antihermitian
@@ -53,7 +55,7 @@ function expm_exact_gradient(H::T, dt)::T where T
 end
 
 """
-Copied from Ville's code, seems to be slower in Julia
+Copied from Ville's code, seems to be slower in Julia than simply taking trace but is faster in Matlab/Python
 Function to compute trace(A @ B) efficiently.
 
 Utilizes the identity trace(A @ B) == sum(transpose(A) * B).

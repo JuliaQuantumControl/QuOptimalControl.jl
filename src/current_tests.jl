@@ -3,6 +3,64 @@
 # okay so lets step through as though we were running a dynamo problem
 
 
+using QuantumInformation
+
+include("./evolution.jl")
+include("./tools.jl")
+# just some general stuff, usually stored in a problem type
+A = [sz]
+B = [sx, sy]
+n_ensemble = 1
+n_controls = 2
+timeslices = 10
+duration = 1
+X_initial = [1.0 + 0im, 0.0]# pure states to start with
+X_target = [0.0, 1.0 + 0.0im]
+norm2 = 1.0
+
+
+# since we can dispatch based on the type of the system then we can assume that we know 1. which error func to use and also 2. which method for gradient
+
+# pure state transfer
+# that means we use eig and abs error
+# if we have some ensembles we need to essentially set up a list of X_target
+X_target = repeat(X_target, n_ensemble)
+X_initial = repeat(X_initial, n_ensemble)
+norm2 = repeat([norm2], n_ensemble)
+
+
+# lets create a set of controls
+init = rand(n_controls, timeslices) # should allow some control over this
+# tau can vary but lets keep it constant, if it varies it must be defined for each time slice
+
+
+ctrl = copy(init)
+# loop ove ensembel of systems
+# compute the generators
+H_list = pw_ham_save(A[1], B, ctrl, n_controls, duration / timeslices, timeslices) .* -1.0im
+
+# now we compute the matrix exponential, here we can cheat a bit, or we don't... depending on whats faster
+U_list = exp.(H_list)
+# U_list = [expm_exact_gradient(i, duration / timeslices) for i in H_list]
+
+
+
+test = expm_exact_gradient(H_list[1], duration / timeslices)
+
+test
+
+# U_list = exp.(H_list)
+
+"""
+error function and gradient for closed systems
+"""
+function error_abs()
+    # we need to compute the value of g, defined as the trace matmul over U and K
+end
+
+# should be ready to run the optimisation now
+
+println("stop you violated the law, pay the court a fine or serve your sentence")
 
 # # task 1 closed system unitary gate synthesis up to a global phase
 # using QuantumInformation

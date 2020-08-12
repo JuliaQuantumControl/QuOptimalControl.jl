@@ -40,3 +40,14 @@ function eig_factors(G; antihermitian = false, tol = 1e-10)
     zeta[degenerate_mask] .= temp[degenerate_mask]
     return (v, zeta, exp_d)
 end
+
+
+"""
+Function to compute the matrix exponential using the eigenvalue decomposition of the matrix, this is slower than exp if your matrix can be a StaticArray
+"""
+function expm_exact_gradient(H::T, dt)::T where T
+    dt_H = dt * H
+    v, zeta, exp_d = eig_factors(dt_H, antihermitian = true)
+
+    v * diagm(exp_d) * v'
+end

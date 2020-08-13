@@ -10,19 +10,19 @@ sx = [0.0 + 0.0im 1.0 + 0.0im
 U0 = [1.0 + 0.0im 0.0 + 0.0im
 0.0 + 0.0im 1.0 + 0.0im]
 
-function series_exp(A)
-    # u02 = Array{ComplexF64,2}(I(2))
+# function series_exp(A)
+#     # u02 = Array{ComplexF64,2}(I(2))
     
-    out = U0 + (A + (A * A) / 2) # + ((A^3) / 6 + (A^4) / 24))
-end
+#     #out = U0 + (A + (A * A) / 2) # + ((A^3) / 6 + (A^4) / 24))
+# end
 
 function evolve(x)
+    # x = complex.(real.(x))
     N = length(x)
-    # U0 = Array{ComplexF64,2}(I(2))
     out = copy(U0)
     for i = 1:N
-        ham = ((-1.0im * 0.1) * sx) * x[i] # there is an issue with this line
-        out = series_exp(ham) * out
+        ham = ((-1.0im) * sx) * x[i] 
+        out = exp(ham) * out
         # U0 = exp(-1.0im * 0.1 * sx * x[i]) * U0
     end
     out
@@ -34,15 +34,18 @@ end
 
 function functional(x)
     U = evolve(x)
-    1 - abs2(ρt' * (U * ρ))
+    1 - abs(ρt' * (U * ρ))^2
 end
 
 x_input = rand(10)
 functional(x_input)
-val, tape = Yota.itrace(functional, x_input)
 
-val, tape = Yota.itrace(functional, x_input)
+val, tape = Yota.trace(functional, x_input)
+
+
 Yota.back!(tape)
+o = Yota.GradResult(tape)[1]
+
 Yota.compile!(tape)
 
 function test(G, x)
@@ -65,13 +68,13 @@ grad(functional, x_input)
 
 Yota.simplegrad(functional, x_input)
 
-o = Yota.GradResult(tape)[1]
 
 Yota.back!(tape)
 import Base./
 
 # first diffrule needed
-@diffrule abs2(x::Number) x real(dy) * (x + x)
+@diffrule abs(x::Number) x x / sqrt(real(x)^2 + imag(x)^2)
+@diffrule abs2(x::Number) x 
 @diffrule (/)(u::Array{ComplexF64,2}, v::Number) u dy / v
 # expand list of rules for (*) to match complex numbers and arrays
 @diffrule *(u::Number, v::Number)            u     v * dy
@@ -83,3 +86,12 @@ import Base./
 @diffrule *(u::Number, v::AbstractArray)    v     u .* dy
 @diffrule *(u::AbstractArray, v::Number)            v     sum(u .* dy)
 @diffrule *(u::AbstractArray, v::AbstractArray)    v     transpose(u) * dy
+
+
+using Zygote
+grad_zygote = Zygote.gradient(functional, x_input)[1]
+
+Zygote.refresh()
+
+using FiniteDiff
+FiniteDiff.finite_difference_gradient(functional, x_input)

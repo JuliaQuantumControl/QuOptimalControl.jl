@@ -6,7 +6,7 @@ n_ensemble = 1
 n_controls = 2
 timeslices = 10
 duration = 1
-X_initial = Matrix{ComplexF64}(I(2))# pure states to start with
+X_initial = Matrix{ComplexF64}(I(2))
 X_target = sz
 norm2 = 1.0
 

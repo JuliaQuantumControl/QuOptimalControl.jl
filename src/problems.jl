@@ -18,12 +18,27 @@ Contains all of the information needed to perform a closed state transfer
     state_init = nothing
     state_target = nothing
     duration = 1
-    timestep = 0.1
+    timestep = 0.1 # this is extra info
     timeslices = 10
     number_pulses = 1
     n_ensemble = 1
     alg = nothing# choose from the struct atm
 end
+
+@kwdef struct UnitarySynthesis <: ClosedSystem
+    H_ctrl = nothing
+    H_drift = nothing
+    X_init = nothing
+    X_target = nothing
+    duration = 1
+    timestep = 0.1
+    timeslices = 10
+    number_pulses = 1
+    n_ensemble = 1
+    norm2 = 1.0
+    alg = nothing
+end
+
 
 # gate syntehsis closed open ClosedSystem
 # closed state trnasfer -> Shai exact gradient

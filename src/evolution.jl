@@ -65,7 +65,7 @@ end
 """
 Function to compute the Hamiltonians for a piecewise constant control and save them. This is useful in many stages
 """
-function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T
+function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices) where T
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
     out = []

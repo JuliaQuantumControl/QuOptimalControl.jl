@@ -79,13 +79,7 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
     ρₜ_list = reverse(ρₜ_list)
 
     # approximate gradient from Glaser paper is used here
-    grad = similar(x_drive)
-    for k = 1:n_ctrls
-        for j = 1:n_steps
-            grad[k, j] = real(tr((ρₜ_list[j])' * 1.0im * dt * commutator(H_ctrl_arr[k], ρ_list[j])))
-            # grad[k, j] = -real(tr(ρₜ_list[j + 1]' * commutator(H_ctrl_arr[k], U_list[j]) * ρ_list[j])) * pc
-        end
-    end
+
     
     # compute total propagator
     U = reduce(*, U_list)
@@ -94,6 +88,13 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
     fid = C1(ρₜ, (U * ρ * U'))
     
     if G !== nothing
+        grad = similar(x_drive)
+        for k = 1:n_ctrls
+            for j = 1:n_steps
+                grad[k, j] = real(tr((ρₜ_list[j])' * 1.0im * dt * commutator(H_ctrl_arr[k], ρ_list[j])))
+                # grad[k, j] = -real(tr(ρₜ_list[j + 1]' * commutator(H_ctrl_arr[k], U_list[j]) * ρ_list[j])) * pc
+            end
+        end
         G .= grad
     end
 
@@ -102,6 +103,91 @@ function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_ste
     end
 
 end
+
+# depending on the problem type there are a lot of similarities between GRAPE methods, lets think about how one might combine them
+
+# lets assume that setting things up for the ensemble is done externally
+# hence we get an array of X_init and X_target, norm2 and also a list of drift Hamiltonians, control Hamiltonians are assumed to be constant across the ensemble (for now)
+
+# using a problem definition we can initialise all of the internal storage arrays
+"""
+Initialise all the storage arrays for a GRAPE optimisation
+"""
+function init_GRAPE(X, timeslices, n_ensemble, H_drift, n_controls)
+    U = repeat([similar(X)], timeslices + 1, n_ensemble)
+    L = repeat([similar(X)], timeslices + 1, n_ensemble)
+    # list of generators
+    G_array = repeat([similar(H_drift)], timeslices, n_ensemble)
+    # exp(generators)
+    P_array = repeat([similar(H_drift)], timeslices, n_ensemble)
+
+    g = zeros(n_ensemble)
+    grad = zeros(n_controls, timeslices, n_ensemble)
+    return (U, L, G_array, P_array, g, grad)
+end
+
+# do we send the arrays to it or do we do something else?
+# this function essentially needs to take as an input a control array and return FoM and gradient
+"""
+Hopefully a more flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
+"""
+function GRAPE(F, G, x, U, L, Gen, P, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, fom_func, gradient_func)
+    # do that here or do it earlier? U, L, Gen, P, g, grad = init_GRAPE()
+    for k = 1:n_ensemble
+        U[1, k] = X_initial[k]
+        L[end, k] = X_target[k]
+        # do we treat all generators like this really?
+        Gen[:,k] .= pw_ham_save(H_drift[k], H_ctrls, x, n_controls, timeslices) .* -1.0im * duration/timeslices
+        P_list[:, k] = exp.(Gen[:, k])
+
+        # forward propagate
+        for t = 1:timeslices
+            U[t + 1, k] = P_list[t, k] * U[t, k]
+        end
+        
+        # prob backwards in time
+        for t = reverse(1:timeslices)
+            L[t, k] = P_list[t, k]' * L[t + 1, k]
+        end
+
+        # now we have to specialise depending on the problem type
+        # g[k] = fom_func(prob)
+
+        t = timeslices # can be chosen arbitrarily
+        g[k] = tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
+
+        # compute the gradient too
+
+        # grad[:,:,k] .= grad_func(prob)
+        for i = 1:n_controls
+            for t = 1:timeslices
+                grad[i, t, k] = -2.0 * real(tr(L[t, k]' * 1.0im * duration / timeslices * H_ctrl[i] * U[t, k]) * tr(U[t, k]' * L[t, k]))
+            end
+        end
+            
+    end
+
+    # then we average over everything
+    wts = ones(n_ensemble)
+
+
+    if G !== nothing
+        @show G 
+        G .= sum(wts .* grad, dims = 3)[:,:,1]
+    end
+
+    if F !== nothing
+        return sum(g .* wts)
+    end
+
+end
+
+(U, L, G_array, P_array, g, grad) = init_GRAPE(X_target[1], timeslices, 1, H_drift[1], 2)
+input = rand(n_controls, timeslices)
+grad = similar(input)
+
+GRAPE(1, grad, input, U, L, G_array, P_array, g, grad, H_drift, H_ctrl, timeslices, n_ensemble, duration, 2, 1, 2)
+
 
 """
 Using the dCRAB method to perform optimisation of a pulse. 

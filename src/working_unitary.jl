@@ -28,7 +28,7 @@ P_list = repeat([similar(H_drift[1])], timeslices, n_ensemble)# as above
 
 # g is the error or figure of merit
 g = zeros(n_ensemble)
-grad = zeros(n_controls, timeslices, n_ensemble)
+grad = zeros(n_controls, timeslices, 2)
 
 
 # loop over ensemble of systems
@@ -37,7 +37,7 @@ for k = 1:n_ensemble
     L[end, k] = X_target[k]
 
     # compute and store the generators
-    G_list[:, k] = pw_ham_save(A[k], B, ctrl, n_controls, duration / timeslices, timeslices) .* -1.0im * duration / timeslices
+    G_list[:, k] = pw_ham_save(A[k], B, ctrl, n_controls, timeslices) .* -1.0im * duration / timeslices
     # now we compute the matrix exponential
     P_list[:,k] = exp.(G_list)
 

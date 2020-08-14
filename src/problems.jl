@@ -12,15 +12,16 @@ Contains all of the information needed to perform a closed state transfer
 # TODO need to decide whether or not we work with density matrices or pure states
 # in theory we can work with both and dispatch to the correct algorithm given the dimensions of the user input
 @kwdef struct ClosedStateTransfer <: ClosedSystem
-    control_Hamiltonians = nothing
-    drift_Hamiltonians = nothing
-    state_init = nothing
-    state_target = nothing
+    H_ctrl = nothing
+    H_drift = nothing
+    X_init = nothing
+    X_target = nothing
     duration = 1
     timestep = 0.1 # this is extra info
     timeslices = 10
     number_pulses = 1
     n_ensemble = 1
+    norm2 = 1.0
     alg = nothing# choose from the struct atm
 end
 

@@ -90,10 +90,18 @@ Evolution functions for various GRAPE tasks
 """
 Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
 """
-function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen, forward)
+function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen; forward = true)
     if forward
         P_list[t, k] * U[t, k]
     else
         P_list[t,k]' * L[t + 1, k]
+    end
+end
+
+function evolve_func(prob::ClosedStateTransfer, t, k, U, L, P_list, Gen;forward = true)
+    if forward
+        P_list[t, k] * U[t, k] * P_list[t, k]'
+    else
+        P_list[t, k]' * L[t + 1, k] * P_list[t, k]
     end
 end

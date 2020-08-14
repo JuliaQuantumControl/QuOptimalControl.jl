@@ -31,6 +31,7 @@ ClosedSystem using approximation gradient of GRAPE uses this function to solve.
     Currently this calls optim, the other algorithms do not... maybe we should change it so that the optimisation is actually done in the algorithms.jl file.
 """
 function _solve(problem::ClosedStateTransfer, alg::GRAPE_approx)
+    @warn "out of date currently, needs fixed"
     test = (F, G, x) -> alg.func_to_call(F, G, problem.drift_Hamiltonians, problem.control_Hamiltonians, problem.state_init, problem.state_target, x, problem.number_pulses, problem.timestep, problem.timeslices)
 
     # generate a random initial guess for the algorithm if the user hasn't provided one

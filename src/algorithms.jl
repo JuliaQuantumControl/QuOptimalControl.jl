@@ -18,10 +18,10 @@ import Base.@kwdef
 
 """
 Structs here will replace the functions below I think, so that we can dispatch on them, need to figure this one out before continuing.
-# TODO I think we can implement the algorithms as structs that way we can dispatch on them properly
 """
+# TODO I think we can implement the algorithms as structs that way we can dispatch on them properly
 @kwdef struct GRAPE_approx <: gradientBased
-    func_to_call = GRAPE # currently we'll just store the function associated with the algorithm
+    func_to_call = GRAPE! # currently we'll just store the function associated with the algorithm
 end
 
 @kwdef struct GRAPE_AD <: gradientBased
@@ -63,7 +63,8 @@ Function that is compatible with Optim.jl, takes Hamiltonians, states and some o
 # TODO - Shai has this Dynamo paper where he gives an exact gradient using the eigen function of the linear algebra library
 # TODO - How do we use this with a simple ensemble?
 # TODO - can we tidy it up and make it generically usable?
-function GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_steps)
+function OLD_GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_steps)
+    @warn "this was my first try at GRAPE, its inflexible and unused now"
     # compute the propgators
     U_list = pw_evolve_save(H_drift[1], H_ctrl_arr, x_drive, n_ctrls, dt, n_steps)
 
@@ -131,62 +132,49 @@ function init_GRAPE(X, timeslices, n_ensemble, H_drift, n_controls)
     return (U, L, G_array, P_array, g, grad)
 end
 
-# do we send the arrays to it or do we do something else?
-# this function essentially needs to take as an input a control array and return FoM and gradient
 """
-Hopefully a more flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
+More flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
+Note: this code updates the arrays passed to it in place, this means it doesn't allocate memory but things can get messy
 """
 # TODO decide if we should pass functions as arguments or not
-function GRAPE_new(F, G, x, U, L, Gen, P_list, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, prob)# , fom_func, gradient_func, evolve_func)
-    # do that here or do it earlier? U, L, Gen, P, g, grad = init_GRAPE()
+function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, prob)# , fom_func, gradient_func, evolve_func)
     dt = duration / timeslices
     for k = 1:n_ensemble
-        U[1, k] = X_initial[k]
-        L[end, k] = X_target[k]
+        U[1, k] = prob.X_init[k]
+        L[end, k] = prob.X_target[k]
         # do we treat all generators like this really?
         Gen[:,k] .= pw_ham_save(H_drift[k], H_ctrls, x, n_controls, timeslices) .* -1.0im * dt
         P_list[:, k] = exp.(Gen[:, k])
 
         # forward propagate
-        # in order for this to be general I think we need to pass a function in
+        # in order for this to be general it will look for an evolution rule
         for t = 1:timeslices
             U[t + 1, k] = evolve_func(prob, t, k, U, L, P_list, Gen)
-            # U[t + 1, k] = forward_evolve_func(prob, t, k, U[t, k], L[t, k], P_list[t, k], Gen[t, k])
-            # U[t + 1, k] = P_list[t, k] * U[t, k]
         end
         
         # prob backwards in time
         for t = reverse(1:timeslices)
             L[t, k] = evolve_func(prob, t, k, U, L, P_list, Gen, forward = false)
-            # L[t, k] = P_list[t, k]' * L[t + 1, k]
         end
-
         
-        # now we have to specialise depending on the problem type
-        # g[k] = fom_func(prob)
-
         t = timeslices # can be chosen arbitrarily
         g[k] = fom_func(prob, t, k, U, L, P_list, Gen)
-        # g[k] = tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
 
-        # compute the gradient too
-
-        # grad[:,:,k] .= grad_func(prob)
+        # we can optionally compute this actually
+        # in order for this to be general it uses looks for a gradient definition function
         for c = 1:n_controls
             for t = 1:timeslices
                 # might want to alter this to just pass the matrices that matter rather than everything
-                grad[c, t, k] = grad_func(prob, t, dt, k, H_ctrl[c], U, L, P_list, Gen)
-                # grad[i, t, k] = -2.0 * real(tr(L[t, k]' * 1.0im * duration / timeslices * H_ctrl[i] * U[t, k]) * tr(U[t, k]' * L[t, k]))
+                grad[c, t, k] = grad_func(prob, t, dt, k, H_ctrls[c], U, L, P_list, Gen)
             end
         end
             
     end
 
-    # then we average over everything
+    # then we average over everything, currently everything is equally weighted
     wts = ones(n_ensemble)
 
     if G !== nothing
-        @show G 
         G .= sum(wts .* grad, dims = 3)[:,:,1]
     end
 
@@ -195,8 +183,6 @@ function GRAPE_new(F, G, x, U, L, Gen, P_list, g, grad, H_drift, H_ctrls, timesl
     end
 
 end
-
-
 
 
 """

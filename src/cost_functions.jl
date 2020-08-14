@@ -84,5 +84,5 @@ end
 function fom_func(prob::ClosedStateTransfer, t, k, U, L, P_list, Gen)::Float64
     # recall that target is alwaus the last entry of L
     # and that we have in U[end] the propagated forward target state
-    C1(L[end, k], U[end, L])
+    C1(L[end, k], U[end, k])
 end

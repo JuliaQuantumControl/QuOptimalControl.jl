@@ -6,7 +6,6 @@ import Base.@kwdef
 
 # useful little thing in REPL: fieldnames(ClosedStateTransfer) or fieldnames(typeof(ClosedStateTransfer()))
 
-
 """
 Contains all of the information needed to perform a closed state transfer
 """

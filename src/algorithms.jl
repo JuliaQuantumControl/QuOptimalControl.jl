@@ -6,11 +6,11 @@ abstract type gradientFree <: algorithm end
 using Zygote
 using Optim
 
-include("./cost_functions.jl")
-include("./grad_functions.jl")
-include("./problems.jl")
-include("./evolution.jl")
-include("./tools.jl")
+# include("./cost_functions.jl")
+# include("./grad_functions.jl")
+# include("./problems.jl")
+# include("./evolution.jl")
+# include("./tools.jl")
 
 
 

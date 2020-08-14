@@ -7,7 +7,7 @@ I'm going to try and keep some standard inputs that make sense
 Needs citation from the Schuster lab paper
 """
 
-include("./problems.jl")
+# include("./problems.jl")
 
 """
 Target-gate fidelity

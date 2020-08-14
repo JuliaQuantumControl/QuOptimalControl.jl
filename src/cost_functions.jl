@@ -7,6 +7,8 @@ I'm going to try and keep some standard inputs that make sense
 Needs citation from the Schuster lab paper
 """
 
+include("./problems.jl")
+
 """
 Target-gate fidelity
 """
@@ -58,4 +60,29 @@ Evolution time (target state)
 """
 function C7(ψT, ψJ, N)
     1 - 1 / N * sum(abs2(tr(ψT, ψj)) for ψj in ψJ)
+end
+
+
+"""
+Cost functions for the GRAPE algorithm
+"""
+
+# """
+# general method that you can call to compute the figure of merit
+# """
+# function fom_func(prob, t, k, U, L, P_list, Gen)
+#     _fom_func(prob, t, k, U, L, P_list, Gen)
+# end
+
+"""
+Unitary synthesis figure of merit, from Khaneja et. al. paper (proper citation needed)
+"""
+function fom_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen)::Float64
+    tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
+end
+
+function fom_func(prob::ClosedStateTransfer, t, k, U, L, P_list, Gen)::Float64
+    # recall that target is alwaus the last entry of L
+    # and that we have in U[end] the propagated forward target state
+    C1(L[end, k], U[end, L])
 end

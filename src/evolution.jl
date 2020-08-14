@@ -4,12 +4,7 @@ using StaticArrays
 Contains code to perform time evolution
 """
 
-"""
-Given a problem statement compute the piecewise evolution
-"""
-function pw_evolve(problem)
-
-end
+include("./problems.jl")
 
 """
 Given a set of Hamiltonians (drift and control) compute the evolution
@@ -75,4 +70,30 @@ function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_p
         append!(out, [Htot])
     end
     out
+end
+
+
+"""
+Evolution functions for various GRAPE tasks
+"""
+# does this really need to be so complicated? I think it'll just dispatch to the appropriate method given number of args rather than problem type
+# also since we always know that in this case it'll just 
+
+# """
+# Let's use the same trick as before with multiple dispatch
+# """
+# function evolve_func(prob, t, k, U, L, P_list, Gen; forward = true)
+#     return _evolve_func(prob, t, k, U, L, P_list, Gen, forward)
+# end
+
+# there really must be a better way to do this, given that we simply need to multiply two matrices and sometimes conjugate
+"""
+Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
+"""
+function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen, forward)
+    if forward
+        P_list[t, k] * U[t, k]
+    else
+        P_list[t,k]' * L[t + 1, k]
+    end
 end

@@ -18,8 +18,8 @@ Contains all of the information needed to perform a closed state transfer
     X_target = nothing
     duration = 1
     timestep = 0.1 # this is extra info
-    timeslices = 10
-    number_pulses = 1
+    n_timeslices = 10
+    n_pulses = 1
     n_ensemble = 1
     norm2 = 1.0
     alg = nothing# choose from the struct atm
@@ -32,8 +32,8 @@ end
     X_target = nothing
     duration = 1
     timestep = 0.1
-    timeslices = 10
-    number_pulses = 1
+    n_timeslices = 10
+    n_pulses = 1
     n_ensemble = 1
     norm2 = 1.0
     alg = nothing
@@ -50,8 +50,8 @@ Working with an experiment
 @kwdef struct ExperimentInterface <: Experiment
     duration = 1
     timestep = 0.1
-    timeslices = 10
-    number_pulses = 1
+    n_timeslices = 10
+    n_pulses = 1
     start_exp # function to start exp
     pulse_path = ""
     infidelity_path = ""

@@ -6,6 +6,14 @@ abstract type gradientFree <: algorithm end
 using Zygote
 using Optim
 
+include("./cost_functions.jl")
+include("./grad_functions.jl")
+include("./problems.jl")
+include("./evolution.jl")
+include("./tools.jl")
+
+
+
 import Base.@kwdef
 
 """
@@ -26,9 +34,6 @@ end
     func_to_call = dCRAB
 end
 
-include("./cost_functions.jl")
-include("./evolution.jl")
-include("./tools.jl")
 
 """
 Simple. Use Zygote to solve all of our problems
@@ -132,7 +137,7 @@ end
 Hopefully a more flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
 """
 # TODO decide if we should pass functions as arguments or not
-function GRAPE(F, G, x, U, L, Gen, P_list, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, prob)# , fom_func, gradient_func, evolve_func)
+function GRAPE_new(F, G, x, U, L, Gen, P_list, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, prob)# , fom_func, gradient_func, evolve_func)
     # do that here or do it earlier? U, L, Gen, P, g, grad = init_GRAPE()
     dt = duration / timeslices
     for k = 1:n_ensemble

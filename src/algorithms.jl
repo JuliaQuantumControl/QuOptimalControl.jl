@@ -131,37 +131,44 @@ end
 """
 Hopefully a more flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
 """
-function GRAPE(F, G, x, U, L, Gen, P, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, fom_func, gradient_func)
+# TODO decide if we should pass functions as arguments or not
+function GRAPE(F, G, x, U, L, Gen, P, g, grad, H_drift, H_ctrls, timeslices, n_ensemble, duration, n_controls, prob)# , fom_func, gradient_func, evolve_func)
     # do that here or do it earlier? U, L, Gen, P, g, grad = init_GRAPE()
     for k = 1:n_ensemble
         U[1, k] = X_initial[k]
         L[end, k] = X_target[k]
         # do we treat all generators like this really?
-        Gen[:,k] .= pw_ham_save(H_drift[k], H_ctrls, x, n_controls, timeslices) .* -1.0im * duration/timeslices
+        Gen[:,k] .= pw_ham_save(H_drift[k], H_ctrls, x, n_controls, timeslices) .* -1.0im * duration / timeslices
         P_list[:, k] = exp.(Gen[:, k])
 
         # forward propagate
+        # in order for this to be general I think we need to pass a function in
         for t = 1:timeslices
-            U[t + 1, k] = P_list[t, k] * U[t, k]
+            U[t + 1, k] = evolve_func(prob, t, U, L, P_list, Gen)
+            # U[t + 1, k] = P_list[t, k] * U[t, k]
         end
         
         # prob backwards in time
         for t = reverse(1:timeslices)
-            L[t, k] = P_list[t, k]' * L[t + 1, k]
+            L[t, k] = evolve_func(prob, t, U, L, P_list, Gen)
+            # L[t, k] = P_list[t, k]' * L[t + 1, k]
         end
 
+        
         # now we have to specialise depending on the problem type
         # g[k] = fom_func(prob)
 
         t = timeslices # can be chosen arbitrarily
-        g[k] = tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
+        g[k] = fom_func(prob, t, U, L, P_list, Gen)
+        # g[k] = tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
 
         # compute the gradient too
 
         # grad[:,:,k] .= grad_func(prob)
-        for i = 1:n_controls
+        for c = 1:n_controls
             for t = 1:timeslices
-                grad[i, t, k] = -2.0 * real(tr(L[t, k]' * 1.0im * duration / timeslices * H_ctrl[i] * U[t, k]) * tr(U[t, k]' * L[t, k]))
+                grad[c, t, k] = grad_func(prob, t, c, U, L, P_list, Gen)
+                # grad[i, t, k] = -2.0 * real(tr(L[t, k]' * 1.0im * duration / timeslices * H_ctrl[i] * U[t, k]) * tr(U[t, k]' * L[t, k]))
             end
         end
             
@@ -169,7 +176,6 @@ function GRAPE(F, G, x, U, L, Gen, P, g, grad, H_drift, H_ctrls, timeslices, n_e
 
     # then we average over everything
     wts = ones(n_ensemble)
-
 
     if G !== nothing
         @show G 
@@ -182,11 +188,7 @@ function GRAPE(F, G, x, U, L, Gen, P, g, grad, H_drift, H_ctrls, timeslices, n_e
 
 end
 
-(U, L, G_array, P_array, g, grad) = init_GRAPE(X_target[1], timeslices, 1, H_drift[1], 2)
-input = rand(n_controls, timeslices)
-grad = similar(input)
 
-GRAPE(1, grad, input, U, L, G_array, P_array, g, grad, H_drift, H_ctrl, timeslices, n_ensemble, duration, 2, 1, 2)
 
 
 """

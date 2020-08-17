@@ -34,7 +34,7 @@ Concern below still valid!
 ClosedSystem using approximation gradient of GRAPE uses this function to solve.
     Currently this calls optim, the other algorithms do not... maybe we should change it so that the optimisation is actually done in the algorithms.jl file.
 """
-function _solve(problem::Union(ClosedStateTransfer, UnitarySynthesis), alg::GRAPE_approx)
+function _solve(problem::Union{ClosedStateTransfer,UnitarySynthesis}, alg::GRAPE_approx)
 
     # prepare some storage arrays that we will make use of throughout the computation
     U, L, G_array, P_array, g, grad = init_GRAPE(problem.X_init[1], problem.n_timeslices, problem.n_ensemble, problem.H_drift[1], problem.n_pulses)

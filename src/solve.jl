@@ -68,43 +68,6 @@ function _solve(problem::ClosedStateTransfer, alg::GRAPE_AD)
     solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
 end
 
-"""
-Unitary synthesis using dCRAB to solve the problem
-Here we define a functional for the user, since we can assume that this is the type of problem that they want to solve
-"""
-function _solve(problem::ClosedStateTransfer, alg::dCRAB_type)
-    # we define our own functional here for a closed system
-
-    function user_functional(x)
-        # we get an a 2D array of pulses
-        U = pw_evolve(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
-        # U = reduce(*, U)
-        C1(problem.X_target, (U * problem.X_init * U'))
-    end
-
-    coeffs, pulses, optim_results = dCRAB(problem.n_pulses, problem.timestep, problem.n_timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
-
-    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
-
-end
-
-
-
-"""
-Solve a unitary synthesis problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
-"""
-function _solve(problem::ClosedStateTransfer, alg::GRAPE_AD)
-    
-    function user_functional(x)
-        U = pw_evolve_T(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
-        C1(problem.X_target, U * problem.X_init)
-    end
-
-    init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
-    res = ADGRAPE(user_functional, init)
-
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
-end
 
 """
 ClosedSystemStateTransfer using dCRAB to solve the problem
@@ -127,7 +90,43 @@ function _solve(problem::ClosedStateTransfer, alg::dCRAB_type)
 end
 
 
+"""
+Unitary synthesis using dCRAB to solve the problem
+Here we define a functional for the user, since we can assume that this is the type of problem that they want to solve
+"""
+function _solve(problem::UnitarySynthesis, alg::dCRAB_type)
+    # we define our own functional here for a closed system
 
+    function user_functional(x)
+        # we get an a 2D array of pulses
+        U = pw_evolve(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
+        # U = reduce(*, U)
+        C1(problem.X_target, (U * problem.X_init * U'))
+    end
+
+    coeffs, pulses, optim_results = dCRAB(problem.n_pulses, problem.timestep, problem.n_timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+
+    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
+
+end
+
+
+
+"""
+Solve a unitary synthesis problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
+"""
+function _solve(problem::UnitarySynthesis, alg::GRAPE_AD)
+    
+    function user_functional(x)
+        U = pw_evolve_T(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
+        C1(problem.X_target, U * problem.X_init)
+    end
+
+    init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
+    res = ADGRAPE(user_functional, init)
+
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+end
 
 """
 Closed loop experiment optimisation using dCRAB, the user functional isn't defined by the user at the moment, instead we define it. 

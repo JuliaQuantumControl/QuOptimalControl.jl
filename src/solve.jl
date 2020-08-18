@@ -43,7 +43,8 @@ function _solve(problem::Union{ClosedStateTransfer,UnitarySynthesis}, alg::GRAPE
 
 
     # generate a random initial guess for the algorithm if the user hasn't provided one
-    init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
+    # init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
+    init = problem.initial_guess
 
     res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
     # TODO we need to decide on a common appearance for these SolutionResult structs
@@ -62,7 +63,8 @@ function _solve(problem::ClosedStateTransfer, alg::GRAPE_AD)
         C2(problem.X_target, (U * problem.X_init * U'))
     end
 
-    init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
+    # init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
+    init = problem.initial_guess
     res = ADGRAPE(user_functional, init)
 
     solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)

@@ -2,6 +2,9 @@
 Just some useful functions
 """
 
+using BSON
+
+
 """
 Compute the commutator between two matrices A and B
 """
@@ -12,9 +15,29 @@ end
 """
 Save a SolutionResult to file
 """
-function save(solres)
+function save(solres, file_path)
+    # convert the solres file into a dict for saving
 
+    solres_dict = Dict()
+    solres_keys = fieldnames(typeof(solres))[2:end]
+
+    for k in solres_keys
+        push!(solres_dict, k => getfield(solres, k))
+    end
+
+
+    bson(file_path, solres_dict)
 end
+
+
+"""
+Load a SolutionResult from file
+"""
+function load(file_path)
+    solres_dict = BSON.load(file_path)
+    sol = SolutionResult(nothing, solres_dict[:fidelity], solres_dict[:problem_info], solres_dict[:optimised_pulses])
+end
+
 
 """
 Compute the eigen decomposition of a generator matrix G. Based on work by both Shai Machnes and Ville Bergholm.

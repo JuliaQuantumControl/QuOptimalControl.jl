@@ -10,7 +10,7 @@ Contains the solve function interfaces for now, until I learn a better way to do
 The SolutionResult stores important optimisation information in a nice format
 """
 struct SolutionResult <: Solution
-    result # optimisation result
+    result # optimisation result (not saved)
     fidelity # lets just extract the figure of merit that was reached
     optimised_pulses # store an array of the optimised pulses
     problem_info # can we store the struct or some BSON of the struct that was originally used

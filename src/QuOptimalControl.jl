@@ -7,6 +7,7 @@ include("tools.jl")
 include("evolution.jl")
 include("algorithms.jl")
 include("solve.jl")
+include("visualisation.jl")
 
 export C1, C2, C3, C4, C5, C6, C7, fom_func
 export commutator, eig_factors, expm_exact_gradient, trace_matmul, save, load
@@ -15,5 +16,6 @@ export algorithm, gradientBased, gradientFree, GRAPE_approx, GRAPE_AD, dCRAB_typ
 export solve
 export grad_func
 export Problem, ClosedSystem, Experiment, ClosedStateTransfer, UnitarySynthesis, ExperimentInterface
+export visualise_pulse
 
 end

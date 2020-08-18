@@ -16,6 +16,6 @@ export algorithm, gradientBased, gradientFree, GRAPE_approx, GRAPE_AD, dCRAB_typ
 export solve
 export grad_func
 export Problem, ClosedSystem, Experiment, ClosedStateTransfer, UnitarySynthesis, ExperimentInterface
-export visualise_pulse
+export visualise_expt_val, visualise_pulse
 
 end

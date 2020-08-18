@@ -15,7 +15,7 @@ Included in the problem definition (for now) are some algorithm options to tune 
 Once a problem has been constructed and an algorithm tuned we can simply solve the problem and through the wonders of multiple dispatch the code should just work!
 
 ```julia
-using QuantumInformation
+using QuantumInformation # provides Pauli matrices for example
 
 ψ1 = [1.0 + 0.0im 0.0]
 ψt = [0.0 + 0.0im 1.0]
@@ -41,6 +41,16 @@ sol = solve(prob_GRAPE)
 ```
 
 And the approximate GRAPE algorithm will solve the problem automatically, there's no need to define anything else!
+
+Now we can visualise the output pulse:
+
+```julia
+visualise_pulse(sol.optimised_pulses, duration = 1.0)
+```
+
+![Bar plot of pulse amplitudes](https://raw.githubusercontent.com/alastair-marshall/QuOptimalControl.jl/master/assets/pulsevis.png "Pulse output")
+
+
 
 ### How does it work?
 

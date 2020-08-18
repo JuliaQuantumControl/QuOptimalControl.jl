@@ -18,10 +18,14 @@ problem = UnitarySynthesis(
     2,
     1,
     1.0,
-    nothing
+    GRAPE_approx()
 )
 
+
+sol = solve(problem)
+
 U, L, G_array, P_array, g, grad = init_GRAPE(problem.X_init[1], problem.timeslices, problem.n_ensemble, problem.H_drift[1], problem.number_pulses)
+
 
 
 input = rand(2, 10)

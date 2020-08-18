@@ -3,6 +3,7 @@
 Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 
 **Current status: very WIP!**
+
 **Need to add citations, Shai Machnes, Ville Bergholm, Steffen Glaser, Thomas Schulte-Herbruggen et al.**
 
 ## Usage
@@ -23,40 +24,56 @@ using QuantumInformation
 ρt = ψt' * ψt
 
 prob_GRAPE = ClosedStateTransfer(
-    [sx, sy],
-    [0.0 * sz],
-    ρ1,
-    ρt,
-    1.0,
-    1 / 10,
-    10,
-    2,
-    GRAPE_approx(GRAPE)
+    H_ctrl = [sx, sy],
+    H_drift = [0.0 * sz],
+    X_init = ρ1,
+    X_target = ρt,
+    duration = 1.0,
+    timestep = 1 / 10,
+    n_timeslices = 10,
+    n_pulses = 2,
+    n_ensemble = 1,
+    norm2 = 1.0,
+    GRAPE_approx()
 )
 
 sol = solve(prob_GRAPE)
 ```
 
-Then we can analyse the output pulse that is returned!
+And the approximate GRAPE algorithm will solve the problem automatically, there's no need to define anything else!
+
+### How does it work?
+
+We utilise Julia's multiple dispatch (where the Julia compiler decides which code to run based on the types of the problem) to keep the code clean. This means that when the solve function is called it passes over to a specific implementation of the algorithm for the problem in hand.
+
+Using GRAPE as an example, there is a lot of similarity between different problem types when calculating the propagators but the gradient, figure of merit and evolution functions are different. We use multiple dispatch to choose the correct set of functions (this doesn't incur any time cost because the types are known). 
+
 
 ## Functionality
-* Create a closed system problem using a piecewise control and solve using GRAPE (approx. gradients and autodiff) or dCRAB
-* Closed loop optimisation (at own risk) using dCRAB
-* See Examples.jl for examples!
+* Closed system problems (using GRAPE, dCRAB and Autodiff)
+    * State transfer
+    * Synthesise unitary propagators
+* Open system problems (solving in Liouville space using GRAPE and dCRAB, Autodiff coming)
+    * State transfer 
+* Closed loop optimisation using dCRAB
+    * Use at own risk, improvements coming
+* Ensemble optimisation
+* Lots of examples (in progress but I'm only one person)
 
 ## Why Julia?
 
 Julia is the perfect language to develop these tools in because:
 1. it's easy to express mathematics in
 2. it's really fast and thats what we care about
-3. multiple dispatch makes it easy to code in
-4. Python is inflexible (see multiple dispatch and speed)
-5. The automatic differentiation tooling is really good and improving quickly
+3. multiple dispatch makes it easy to write flexile code
+4. good python interop (package coming)
+5. automatic differentiation tooling is great and improving
 
 This package is a rework of the OCToolbox.jl package but with extra functionality, and more algorithms.
 
 
 ## MVP
+
 What I consider the requirements for a minimimum viable package!
 
 We need to be able to use all of the following algorithms in both open and closed systems efficiently.

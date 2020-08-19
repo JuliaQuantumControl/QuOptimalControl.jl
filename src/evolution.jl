@@ -97,7 +97,7 @@ function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen; forward = 
     end
 end
 
-function evolve_func(prob::ClosedStateTransfer, t, k, U, L, P_list, Gen;forward = true)
+function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen;forward = true)
     if forward
         P_list[t, k] * U[t, k] * P_list[t, k]'
     else

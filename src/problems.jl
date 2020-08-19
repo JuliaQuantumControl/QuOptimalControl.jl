@@ -1,16 +1,9 @@
 abstract type Problem end
 abstract type ClosedSystem <: Problem end
+abstract type OpenSystem <: Problem end
 abstract type Experiment <: Problem end
 
 import Base.@kwdef
-
-# useful little thing in REPL: fieldnames(ClosedStateTransfer) or fieldnames(typeof(ClosedStateTransfer()))
-
-"""
-Contains all of the information needed to perform a closed state transfer
-"""
-# TODO need to decide whether or not we work with density matrices or pure states
-# in theory we can work with both and dispatch to the correct algorithm given the dimensions of the user input
 
 """
 Description of the dynamics of a closed state transfer problem. This also applies method also applies to optimisation of Hermitian operators
@@ -48,10 +41,25 @@ Description of the dynamics of a unitary synthesis problem. Although this contai
     initial_guess = nothing
 end
 
+"""
+Working in Liouville space we can do an optimisation in the presence of relaxation, we can also reuse the gradient and goal functions from before. Assuming Hermitian operators on input, need to deal with non-Hermitian.
 
-# gate syntehsis closed open ClosedSystem
-# closed state transfer -> Shai exact gradient
-# state transfer open system
+Following the Khaneja and Glaser paper provided we can use the same gradient and fom functions as in the relaxation free case but the evolution is now governed by the Liovuillian superoperator.
+"""
+@kwdef struct OpenSystemCoherenceTransfer <: OpenSystem
+    H_ctrl = nothing # these might need changed TODO
+    H_drift = nothing
+    X_init = nothing # in this case some density matrix
+    X_target = nothing # Hermitian operator, density matrix
+    duration = 1
+    timestep = 0.1
+    n_timeslices = 10
+    n_pulses = 1
+    n_ensemble = 1
+    norm2 = 1.0
+    alg = nothing
+    initial_guess = nothing
+end
 
 """
 Working with an experiment

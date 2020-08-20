@@ -13,145 +13,145 @@ struct SolutionResult <: Solution
     result # optimisation result (not saved)
     fidelity # lets just extract the figure of merit that was reached
     optimised_pulses # store an array of the optimised pulses
-    problem_info # can we store the struct or some BSON of the struct that was originally used
+    prob_info # can we store the struct or some BSON of the struct that was originally used
 end
 
 
 """
-Generic interface, takes the alg choice out of the problem struct and then we can dispatch on it to the various _solve methods
+Generic interface, takes the alg choice out of the prob struct and then we can dispatch on it to the various _solve methods
 """
-function solve(problem)
-    # println("no algorithm, using default for problem type")
+function solve(prob)
+    # println("no algorithm, using default for prob type")
     # then use approx GRAPE for everything
-    _solve(problem, problem.alg)
+    _solve(prob, prob.alg)
 end
 
 """
-This solve function should handle ClosedStateTransfer, UnitarySynthesis and an open system governed in Liouville space, since the bulk of the code remains the same and we dispatch based on problem type to the correct evolution algorithms (Khaneja et. al.)
+This solve function should handle ClosedStateTransfer, UnitarySynthesis and an open system governed in Liouville space, since the bulk of the code remains the same and we dispatch based on prob type to the correct evolution algorithms (Khaneja et. al.)
 
 Concern below still valid!
 
 ClosedSystem using approximation gradient of GRAPE uses this function to solve.
     Currently this calls optim, the other algorithms do not... maybe we should change it so that the optimisation is actually done in the algorithms.jl file.
 """
-function _solve(problem::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx)
+function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx)
 
     # prepare some storage arrays that we will make use of throughout the computation
-    U, L, G_array, P_array, g, grad = init_GRAPE(problem.X_init[1], problem.n_timeslices, problem.n_ensemble, problem.H_drift[1], problem.n_pulses)
+    U, L, G_array, P_array, g, grad = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_pulses)
 
-    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, problem.H_drift, problem.H_ctrl, problem.n_timeslices, problem.n_ensemble, problem.duration, problem.n_pulses, problem)
+    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_pulses, prob)
 
 
     # generate a random initial guess for the algorithm if the user hasn't provided one
-    # init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
-    init = problem.initial_guess
+    # init = rand(prob.n_pulses, prob.n_timeslices) .* 0.001
+    init = prob.initial_guess
 
-    res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
+    res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_traces = true))
     # TODO we need to decide on a common appearance for these SolutionResult structs
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 
     return solres
 end
 
 """
-Solve closed state transfer problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
+Solve closed state transfer prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
-function _solve(problem::ClosedStateTransfer, alg::GRAPE_AD)
+function _solve(prob::ClosedStateTransfer, alg::GRAPE_AD)
     
     function user_functional(x)
-        U = pw_evolve_T(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
-        C2(problem.X_target, (U * problem.X_init * U'))
+        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
+        C2(prob.X_target, (U * prob.X_init * U'))
     end
 
-    # init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
-    init = problem.initial_guess
+    # init = rand(prob.n_pulses, prob.n_timeslices) .* 0.001
+    init = prob.initial_guess
     res = ADGRAPE(user_functional, init)
 
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 end
 
 
 """
-ClosedSystemStateTransfer using dCRAB to solve the problem
-Here we define a functional for the user, since we can assume that this is the type of problem that they want to solve
+ClosedSystemStateTransfer using dCRAB to solve the prob
+Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
 """
-function _solve(problem::ClosedStateTransfer, alg::dCRAB_type)
+function _solve(prob::ClosedStateTransfer, alg::dCRAB_type)
     # we define our own functional here for a closed system
 
     function user_functional(x)
         # we get an a 2D array of pulses
-        U = pw_evolve(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
+        U = pw_evolve(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
         # U = reduce(*, U)
-        C1(problem.X_target, U * problem.X_init)
+        C1(prob.X_target, U * prob.X_init)
     end
 
-    coeffs, pulses, optim_results = dCRAB(problem.n_pulses, problem.timestep, problem.n_timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
 
-    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
+    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
 end
 
 
 """
-Unitary synthesis using dCRAB to solve the problem
-Here we define a functional for the user, since we can assume that this is the type of problem that they want to solve
+Unitary synthesis using dCRAB to solve the prob
+Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
 """
-function _solve(problem::UnitarySynthesis, alg::dCRAB_type)
+function _solve(prob::UnitarySynthesis, alg::dCRAB_type)
     # we define our own functional here for a closed system
 
     function user_functional(x)
         # we get an a 2D array of pulses
-        U = pw_evolve(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
+        U = pw_evolve(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
         # U = reduce(*, U)
-        C1(problem.X_target, (U * problem.X_init * U'))
+        C1(prob.X_target, (U * prob.X_init * U'))
     end
 
-    coeffs, pulses, optim_results = dCRAB(problem.n_pulses, problem.timestep, problem.n_timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
 
-    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
+    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
 end
 
 
 
 """
-Solve a unitary synthesis problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
+Solve a unitary synthesis prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
-function _solve(problem::UnitarySynthesis, alg::GRAPE_AD)
+function _solve(prob::UnitarySynthesis, alg::GRAPE_AD)
     
     function user_functional(x)
-        U = pw_evolve_T(problem.H_drift[1], problem.H_ctrl, x, problem.n_pulses, problem.timestep, problem.n_timeslices)
-        C1(problem.X_target, U * problem.X_init)
+        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
+        C1(prob.X_target, U * prob.X_init)
     end
 
-    init = rand(problem.n_pulses, problem.n_timeslices) .* 0.001
+    init = rand(prob.n_pulses, prob.n_timeslices) .* 0.001
     res = ADGRAPE(user_functional, init)
 
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 end
 
 """
 Closed loop experiment optimisation using dCRAB, the user functional isn't defined by the user at the moment, instead we define it. 
 """
-function _solve(problem::Experiment, alg::dCRAB_type)
+function _solve(prob::Experiment, alg::dCRAB_type)
     """
     user functional that will create a pulse file and start the experiment
     """
     function user_functional(x)
         # we get a 2D array of pulses, with delimited files we can write this to a file
-        open(problem.pulse_path, "w") do io
+        open(prob.pulse_path, "w") do io
             writedlm(io, x')
         end
         # TODO you need to wait can use built in FileWatching function 
-        problem.start_exp()
-        o = watch_file(problem.infidelity_path, problem.timeout) # might need to monitor this differently
+        prob.start_exp()
+        o = watch_file(prob.infidelity_path, prob.timeout) # might need to monitor this differently
 
         # then read in the result
-        infid = readdlm(problem.infidelity_path)[1]
+        infid = readdlm(prob.infidelity_path)[1]
     end
 
-    coeffs, pulses, optim_results = dCRAB(problem.n_pulses, problem.timestep, problem.n_timeslices, problem.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
 
-    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, problem)
+    solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
 end

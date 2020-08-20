@@ -14,7 +14,6 @@ Description of the dynamics of a closed state transfer problem. This also applie
     X_init # initial state
     X_target # target operator or state
     duration # duration of pulse
-    timestep # duration / slices
     n_timeslices # slices
     n_pulses # number of pulses
     n_ensemble # number of members for ensemble optimisation
@@ -23,6 +22,7 @@ Description of the dynamics of a closed state transfer problem. This also applie
     initial_guess # guess at controls
 end
 
+# do we need a set of inner constructors so that we can compute the timestep rather than specify it?
 # function ClosedStateTransfer(; B, A, X_init, X_target, duration, n_timeslices, n_pulses, n_ensemble, norm2, alg, initial_guess)
 #     # how do we deal with these if we start using callable functions
 #     @assert size(A)[1] == n_ensemble
@@ -47,7 +47,6 @@ Description of the dynamics of a unitary synthesis problem. Although this contai
     X_init # initial state
     X_target # target operator or state
     duration # duration of pulse
-    timestep # duration / slices
     n_timeslices # slices
     n_pulses # number of pulses
     n_ensemble # number of members for ensemble optimisation
@@ -68,7 +67,6 @@ Following the Khaneja and Glaser paper provided we can use the same gradient and
     X_init # initial state
     X_target # target operator or state
     duration # duration of pulse
-    timestep # duration / slices
     n_timeslices # slices
     n_pulses # number of pulses
     n_ensemble # number of members for ensemble optimisation

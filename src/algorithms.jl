@@ -14,7 +14,7 @@ Structs here simply used for dispatch to the correct method
 struct GRAPE_approx <: gradientBased end
 struct GRAPE_AD <: gradientBased end
 
-@kwdef struct dCRAB_inf <: gradientFree
+@kwdef struct dCRAB_options <: gradientFree
     n_coeff = 2
     n_freq = 2
 end
@@ -116,7 +116,7 @@ Note: this code updates the arrays passed to it in place, this means it doesn't 
 """
 function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensemble, duration, n_controls, prob)
     # since we pass a problem definition anyway, so that we can dispatch to the right methods, we can use the defined values inside?
-    
+
 
     dt = duration / n_timeslices
     for k = 1:n_ensemble

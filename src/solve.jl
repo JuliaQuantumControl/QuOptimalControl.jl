@@ -75,7 +75,7 @@ end
 ClosedSystemStateTransfer using dCRAB to solve the prob
 Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
 """
-function _solve(prob::ClosedStateTransfer, alg::dCRAB_type)
+function _solve(prob::ClosedStateTransfer, alg::dCRAB_options)
     # we define our own functional here for a closed system
 
     function user_functional(x)
@@ -96,7 +96,7 @@ end
 Unitary synthesis using dCRAB to solve the prob
 Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
 """
-function _solve(prob::UnitarySynthesis, alg::dCRAB_type)
+function _solve(prob::UnitarySynthesis, alg::dCRAB_options)
     # we define our own functional here for a closed system
 
     function user_functional(x)
@@ -133,7 +133,7 @@ end
 """
 Closed loop experiment optimisation using dCRAB, the user functional isn't defined by the user at the moment, instead we define it. 
 """
-function _solve(prob::Experiment, alg::dCRAB_type)
+function _solve(prob::Experiment, alg::dCRAB_options)
     """
     user functional that will create a pulse file and start the experiment
     """

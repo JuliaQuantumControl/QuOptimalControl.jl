@@ -61,7 +61,6 @@ Working in Liouville space we can do an optimisation in the presence of relaxati
 Following the Khaneja and Glaser paper provided we can use the same gradient and fom functions as in the relaxation free case but the evolution is now governed by the Liovuillian superoperator.
 """
 @kwdef struct OpenSystemCoherenceTransfer <: OpenSystem
-    @warn "this might not work yet, but fixes are incoming"
     B # control terms
     A # drift terms
     X_init # initial state

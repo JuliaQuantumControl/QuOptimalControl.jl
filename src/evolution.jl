@@ -11,11 +11,13 @@ function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pul
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
     U0::T = T(I(D))
-    Htot = similar(H₀)
     for i = 1:timeslices
         # compute the propagator
-        @views Htot .= T(H₀ + sum(Hₓ_array .* x_arr[:, i]))
-        @views U0 .= exp(-1.0im * timestep * Htot) * U0
+        Htot = H₀
+        for j = 1:K
+            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
+        @views U0 = exp(-1.0im * timestep * Htot) * U0
     end
     U0
 end
@@ -47,8 +49,11 @@ function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, 
     U0 = T(I(D))
     for i = 1:timeslices
     # compute the propagator
-        Htot = T(H₀ + sum(Hₓ_array .* x_arr[:, i]))
-        U0 = exp(-1.0im * timestep * Htot)# * U0
+        Htot = H₀
+        for j = 1:K
+            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
+        @views U0 = exp(-1.0im * timestep * Htot)# * U0
         append!(out, [U0])
     end
     out
@@ -65,8 +70,10 @@ function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_p
     out = T[]
     U0 = T(I(D)) # I think this works like I want
     for i = 1:timeslices
-        # Htot = SMatrix{D,D,ComplexF64}(H₀ + sum(Hₓ_array .* x_arr[:, i]))
-        Htot = T(H₀ + sum(Hₓ_array .* x_arr[:, i]))
+        Htot = H₀
+        for j = 1:K
+            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
         append!(out, [Htot])
     end
     out

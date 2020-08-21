@@ -16,7 +16,6 @@ struct SolutionResult <: Solution
     prob_info # can we store the struct or some BSON of the struct that was originally used
 end
 
-
 """
 Generic interface, takes the alg choice out of the prob struct and then we can dispatch on it to the various _solve methods
 """
@@ -37,13 +36,13 @@ ClosedSystem using approximation gradient of GRAPE uses this function to solve.
 function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx)
 
     # prepare some storage arrays that we will make use of throughout the computation
-    U, L, G_array, P_array, g, grad = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_pulses)
+    U, L, G_array, P_array, g, grad = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
 
-    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_pulses, prob)
+    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob)
 
 
     # generate a random initial guess for the algorithm if the user hasn't provided one
-    # init = rand(prob.n_pulses, prob.n_timeslices) .* 0.001
+    # init = rand(prob.n_controls, prob.n_timeslices) .* 0.001
     init = prob.initial_guess
 
     res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_traces = true))
@@ -59,11 +58,11 @@ Solve closed state transfer prob using ADGRAPE, this means that we need to use a
 function _solve(prob::ClosedStateTransfer, alg::GRAPE_AD)
     
     function user_functional(x)
-        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
+        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
         C2(prob.X_target, (U * prob.X_init * U'))
     end
 
-    # init = rand(prob.n_pulses, prob.n_timeslices) .* 0.001
+    # init = rand(prob.n_controls, prob.n_timeslices) .* 0.001
     init = prob.initial_guess
     res = ADGRAPE(user_functional, init)
 
@@ -80,12 +79,12 @@ function _solve(prob::ClosedStateTransfer, alg::dCRAB_options)
 
     function user_functional(x)
         # we get an a 2D array of pulses
-        U = pw_evolve(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
+        U = pw_evolve(prob.A[1], prob.B, x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
         # U = reduce(*, U)
         C1(prob.X_target, U * prob.X_init)
     end
 
-    coeffs, pulses, optim_results = dCRAB(prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
@@ -101,18 +100,16 @@ function _solve(prob::UnitarySynthesis, alg::dCRAB_options)
 
     function user_functional(x)
         # we get an a 2D array of pulses
-        U = pw_evolve(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
+        U = pw_evolve(prob.A[1], prob.B, x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
         # U = reduce(*, U)
         C1(prob.X_target, (U * prob.X_init * U'))
     end
 
-    coeffs, pulses, optim_results = dCRAB(prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
 end
-
-
 
 """
 Solve a unitary synthesis prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
@@ -120,11 +117,11 @@ Solve a unitary synthesis prob using ADGRAPE, this means that we need to use a p
 function _solve(prob::UnitarySynthesis, alg::GRAPE_AD)
     
     function user_functional(x)
-        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices)
+        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
         C1(prob.X_target, U * prob.X_init)
     end
 
-    init = rand(prob.n_pulses, prob.n_timeslices) .* 0.001
+    init = rand(prob.n_controls, prob.n_timeslices) .* 0.001
     res = ADGRAPE(user_functional, init)
 
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
@@ -150,7 +147,7 @@ function _solve(prob::Experiment, alg::dCRAB_options)
         infid = readdlm(prob.infidelity_path)[1]
     end
 
-    coeffs, pulses, optim_results = dCRAB(prob.n_pulses, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 

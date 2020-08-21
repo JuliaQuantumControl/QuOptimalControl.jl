@@ -117,7 +117,6 @@ Note: this code updates the arrays passed to it in place, this means it doesn't 
 function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensemble, duration, n_controls, prob)
     # since we pass a problem definition anyway, so that we can dispatch to the right methods, we can use the defined values inside?
 
-
     dt = duration / n_timeslices
     for k = 1:n_ensemble
         U[1, k] = prob.X_init[k]

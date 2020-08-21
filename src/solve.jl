@@ -45,7 +45,7 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
     # init = rand(prob.n_controls, prob.n_timeslices) .* 0.001
     init = prob.initial_guess
 
-    res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_traces = true))
+    res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_trace = true))
     # TODO we need to decide on a common appearance for these SolutionResult structs
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 
@@ -151,4 +151,15 @@ function _solve(prob::Experiment, alg::dCRAB_options)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
+end
+
+"""
+Can we combine algorithms to improve how we solve things? From Discussion with Phila
+"""
+function hybrid_solve(prob, alg_list)
+    for alg in alg_list
+        sol = _solve(prob, alg)
+        prob.initial_guess[:] = sol.optimised_pulses
+    end
+    sol
 end

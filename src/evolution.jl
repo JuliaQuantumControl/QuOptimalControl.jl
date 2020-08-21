@@ -67,31 +67,38 @@ Function to compute the Hamiltonians for a piecewise constant control and save t
 function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices) where T
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
-    out = T[]
+    out = Vector{T}(undef, timeslices)
     U0 = T(I(D)) # I think this works like I want
     for i = 1:timeslices
         Htot = H₀
         for j = 1:K
             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
-        append!(out, [Htot])
+        out[i] = Htot
     end
     out
 end
+
+"""
+In-place version of the Hamiltonian save function above, reduces allocations further
+"""
+function pw_ham_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices, output) where T
+    D = size(H₀)[1] # get dimension of the system
+    K = n_pulses
+    Htot = copy(H₀)
+    for i = 1:timeslices
+        for j = 1:K
+            @views Htot = Hₓ_array[j] * x_arr[j, i]
+        end
+        @inbounds output[i] = Htot + H₀
+    end
+end
+
 
 
 """
 Evolution functions for various GRAPE tasks
 """
-# does this really need to be so complicated? I think it'll just dispatch to the appropriate method given number of args rather than problem type
-# also since we always know that in this case it'll just 
-
-# """
-# Let's use the same trick as before with multiple dispatch
-# """
-# function evolve_func(prob, t, k, U, L, P_list, Gen; forward = true)
-#     return _evolve_func(prob, t, k, U, L, P_list, Gen, forward)
-# end
 
 # there really must be a better way to do this, given that we simply need to multiply two matrices and sometimes conjugate
 """

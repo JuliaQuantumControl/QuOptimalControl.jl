@@ -80,19 +80,22 @@ function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_p
 end
 
 """
-In-place version of the Hamiltonian save function above, reduces allocations further
+An almost allocation free (1 alloc in my tests) version of the Hamiltonian saver, since the update is inplace we have to be careful with the definition of out!
 """
-function pw_ham_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices, output) where T
-    D = size(H₀)[1] # get dimension of the system
+function pw_ham_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, out) where T
     K = n_pulses
-    Htot = copy(H₀)
-    for i = 1:timeslices
-        for j = 1:K
-            @views Htot = Hₓ_array[j] * x_arr[j, i]
+    Htot = similar(H₀)
+
+    @views @inbounds for i = 1:timeslices
+        @. Htot = 0.0 * Htot
+        @inbounds for j = 1:K
+            @. Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
-        @inbounds output[i] = Htot + H₀
+        @. out[i] = Htot + H₀
     end
 end
+
+
 
 
 

@@ -97,7 +97,7 @@ end
 """
 Initialise all the storage arrays for a GRAPE optimisation
 """
-function init_GRAPE2(X, timeslices, n_ensemble, A, n_controls)
+function init_GRAPE(X, timeslices, n_ensemble, A, n_controls)
     U = [similar(X) for i = 1:timeslices + 1, j = 1:n_ensemble]
     L = [similar(X) for i = 1:timeslices + 1, j = 1:n_ensemble]
     # list of generators

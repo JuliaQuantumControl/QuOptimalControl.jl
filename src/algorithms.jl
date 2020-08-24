@@ -97,18 +97,19 @@ end
 """
 Initialise all the storage arrays for a GRAPE optimisation
 """
-function init_GRAPE(X, timeslices, n_ensemble, A, n_controls)
-    U = repeat([similar(X)], timeslices + 1, n_ensemble)
-    L = repeat([similar(X)], timeslices + 1, n_ensemble)
+function init_GRAPE2(X, timeslices, n_ensemble, A, n_controls)
+    U = [similar(X) for i = 1:timeslices + 1, j = 1:n_ensemble]
+    L = [similar(X) for i = 1:timeslices + 1, j = 1:n_ensemble]
     # list of generators
-    G_array = repeat([similar(A)], timeslices, n_ensemble)
+    G_array = [similar(A) for i = 1:timeslices, j = 1:n_ensemble]
     # exp(generators)
-    P_array = repeat([similar(A)], timeslices, n_ensemble)
+    P_array = [similar(A) for i = 1:timeslices, j = 1:n_ensemble]
 
     g = zeros(n_ensemble)
     grad = zeros(n_controls, timeslices, n_ensemble)
     return (U, L, G_array, P_array, g, grad)
 end
+
 
 """
 More flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)

@@ -95,6 +95,24 @@ function pw_ham_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, 
     end
 end
 
+"""
+An almost allocation free (1 alloc in my tests) version of the Generator saving function, this saves the generators of propagators (implementation might differ for prob)
+"""
+function pw_gen_save!(prob::Union{ClosedStateTransfer,UnitarySynthesis}, H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, duration, out) where T
+    K = n_pulses
+    Htot = similar(H₀)
+    dt = timeslices / duration
+
+    @views @inbounds for i = 1:timeslices
+        @. Htot = 0.0 * Htot
+        @inbounds for j = 1:K
+            @. Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
+        @. out[i] = (Htot + H₀) .* (-1.0im * dt)
+    end
+end
+
+
 
 
 
@@ -107,6 +125,8 @@ Evolution functions for various GRAPE tasks
 """
 Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
 """
+
+# ask someone if I've gone mad about using multiple dispatch here....
 function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen; forward = true)
     if forward
         P_list[t, k] * U[t, k]
@@ -122,3 +142,30 @@ function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer
         P_list[t, k]' * L[t + 1, k] * P_list[t, k]
     end
 end
+
+
+
+"""
+In-place evolution functions 
+"""
+function evolve_func!(prob::UnitarySynthesis, t, k, U, L, P_list, Gen, store; forward = true)
+    if forward
+        @views mul!(U[t+1, k], P_list[t, k], U[t, k])
+    else
+        @views mul!(L[t, k], P_list[t, k]', L[t+1, k])
+    end
+end
+
+"""
+In-place evolution functions, I think these don't allocate at all
+"""
+function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen, store; forward = true)
+    if forward
+        @views mul!(store, U[t, k], P_list[t, k]')
+        @views mul!(U[t+1, k], P_list[t, k], store)
+    else
+        @views mul!(store, L[t+1, k], P_list[t, k])
+        @views mul!(L[t, k], P_list[t, k]',  store)
+    end
+end
+

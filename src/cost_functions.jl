@@ -78,11 +78,11 @@ Cost functions for the GRAPE algorithm
 Unitary synthesis figure of merit, from Khaneja et. al. paper (proper citation needed)
 """
 function fom_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen)::Float64
-    tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
+    @views tr(L[t, k]' * U[t, k]) * tr(U[t, k]' * L[t, k])
 end
 
 function fom_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen)::Float64
     # recall that target is alwaus the last entry of L
     # and that we have in U[end] the propagated forward target state
-    C1(L[end, k], U[end, k])
+    @views C1(L[end, k], U[end, k])
 end

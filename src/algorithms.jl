@@ -158,7 +158,7 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
 
     # then we average over everything
     if G !== nothing
-        G .= sum(weights .* grad, dims = 3)[:,:,1]
+        @views G .= sum(weights .* grad, dims = 1)[1,:, :]
     end
 
     if F !== nothing
@@ -173,7 +173,7 @@ Using the dCRAB method to perform optimisation of a pulse.
 
 The user here must provide a functional that we will optimise, optimisation is carried out here
 """
-function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
+function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, initial_guess, user_func)
 
     # lets set up an ansatz that will currently be for Fourier series
     # lets also refactor our ansatz
@@ -189,7 +189,9 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_func)
     optimised_coeffs = []
     optim_results = [] # you do 1NM search per super iteration so you need to keep track of that
 
-    pulses = [zeros(1, timeslices) for i = 1:n_pulses]
+    # pulses = [zeros(1, timeslices) for i = 1:n_pulses]
+    pulses = initial_guess # lets think about this a bit, it should be a list of pulses
+    # pulses = [initial_guess[:, i] for i = 1:n_pulses] # something like this maybe?
 
     pulse_time = 0:dt:duration - dt
 

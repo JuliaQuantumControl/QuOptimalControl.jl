@@ -12,6 +12,20 @@ function commutator(A, B)
     A * B - B * A
 end
 
+# mul!ing over a in-place commutator :D (I need to get out more)
+function commutator!(A, B, store)
+    mul!(store, A, B)
+
+    A * B - B * A
+end
+
+
+
+
+
+
+
+
 """
 Save a SolutionResult to file
 """

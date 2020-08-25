@@ -115,7 +115,7 @@ end
 More flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
 Note: this code updates the arrays passed to it in place, this means it doesn't allocate memory but things can get messy
 """
-function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensemble, duration, n_controls, prob)
+function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
     # since we pass a problem definition anyway, so that we can dispatch to the right methods, we can use the defined values inside?
 
     dt = duration / n_timeslices
@@ -123,18 +123,23 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
         U[1, k] = prob.X_init[k]
         L[end, k] = prob.X_target[k]
         # do we treat all generators like this really?
-        Gen[:,k] .= pw_ham_save(A[k], B, x, n_controls, n_timeslices) .* -1.0im * dt
-        P_list[:, k] = exp.(Gen[:, k])
+        # Gen[:,k] .= pw_ham_save(A[k], B, x, n_controls, n_timeslices) .* -1.0im * dt
+        pw_ham_save!(A[k], B, x, n_controls, n_timeslices, @view Gen[:,k])
+
+        # we can probably do this better I think
+        # not sure about whether to use exp or this exp! here
+        # could do multiple dispatch... to a something
+        @views P_list[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
 
         # forward propagate
         # in order for this to be general it will look for an evolution rule
         for t = 1:n_timeslices
-            U[t + 1, k] = evolve_func(prob, t, k, U, L, P_list, Gen)
+            evolve_func!(prob, t, k, U, L, P_list, Gen, evolve_store, forward = true)
         end
         
         # prob backwards in time
         for t = reverse(1:n_timeslices)
-            L[t, k] = evolve_func(prob, t, k, U, L, P_list, Gen, forward = false)
+            evolve_func!(prob, t, k, U, L, P_list, Gen, evolve_store, forward = false)
         end
         
         t = n_timeslices # can be chosen arbitrarily
@@ -145,21 +150,19 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
         for c = 1:n_controls
             for t = 1:n_timeslices
                 # might want to alter this to just pass the matrices that matter rather than everything
-                grad[c, t, k] = grad_func(prob, t, dt, k, B[c], U, L, P_list, Gen)
+                @views grad[c, t, k] = grad_func(prob, t, dt, k, B[c], U, L, P_list, Gen, evolve_store)
             end
         end
             
     end
 
-    # then we average over everything, currently everything is equally weighted
-    wts = ones(n_ensemble)
-
+    # then we average over everything
     if G !== nothing
-        G .= sum(wts .* grad, dims = 3)[:,:,1]
+        G .= sum(weights .* grad, dims = 3)[:,:,1]
     end
 
     if F !== nothing
-        return sum(g .* wts)
+        return sum(g .* weights)
     end
 
 end

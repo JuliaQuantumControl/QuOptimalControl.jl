@@ -127,7 +127,7 @@ Function to compute the evolution for Unitary synthesis, since here we simply st
 """
 
 # ask someone if I've gone mad about using multiple dispatch here....
-function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen; forward = true)
+function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen, store; forward = true)
     if forward
         P_list[t, k] * U[t, k]
     else
@@ -135,7 +135,7 @@ function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen; forward = 
     end
 end
 
-function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen;forward = true)
+function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen, store;forward = true)
     if forward
         P_list[t, k] * U[t, k] * P_list[t, k]'
     else

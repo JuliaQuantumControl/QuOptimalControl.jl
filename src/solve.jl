@@ -1,6 +1,7 @@
 abstract type Solution end
 using Optim
 using FileWatching
+using DelimitedFiles
 
 """
 Contains the solve function interfaces for now, until I learn a better way to do it

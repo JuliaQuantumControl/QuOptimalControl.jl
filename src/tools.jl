@@ -3,6 +3,7 @@ Just some useful functions
 """
 
 using BSON
+using DelimitedFiles
 
 
 """
@@ -50,6 +51,16 @@ Load a SolutionResult from file
 function load(file_path)
     solres_dict = BSON.load(file_path)
     sol = SolutionResult(nothing, solres_dict[:fidelity], solres_dict[:problem_info], solres_dict[:optimised_pulses])
+end
+
+"""
+Write an array called pulse to a file, could also write a time array if that's necessary.
+"""
+function pulse_to_file(pulse, file_path)
+    # can maybe check the shape and reshape so that its always time going down the file
+    open(file_path, "w") do io
+        writedlm(io, pulse')
+    end 
 end
 
 

@@ -123,17 +123,17 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
     for k = 1:n_ensemble
         U[1, k] = prob.X_init[k]
         L[end, k] = prob.X_target[k]
-        # do we treat all generators like this really?
-        # Gen[:,k] .= pw_ham_save(A[k], B, x, n_controls, n_timeslices) .* -1.0im * dt
-        pw_ham_save!(A[k], B, x, n_controls, n_timeslices, @view Gen[:,k])
 
+
+        # do we need to actually save the generators of the transforms or do we simply need the propagators?
+        # why does this sometimes fail?
+        pw_ham_save!(A[k], B, x, n_controls, n_timeslices, @view Gen[:,k])
         # we can probably do this better I think
         # not sure about whether to use exp or this exp! here
         # could do multiple dispatch... to a something
         @views P_list[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
 
         # forward propagate
-        # in order for this to be general it will look for an evolution rule
         for t = 1:n_timeslices
             evolve_func!(prob, t, k, U, L, P_list, Gen, evolve_store, forward = true)
         end

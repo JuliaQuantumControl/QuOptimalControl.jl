@@ -4,6 +4,8 @@ Quantum optimal control essentially tries to provide numerically optimised solut
 
 **Current status: very WIP!**
 
+**If you'd like to help, please get in touch with me! @nv_alastair on Twitter or somehow through Github!**
+
 **Need to add citations, Shai Machnes, Ville Bergholm, Steffen Glaser, Thomas Schulte-Herbruggen et al.**
 
 ## Usage

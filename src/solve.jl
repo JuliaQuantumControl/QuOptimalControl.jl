@@ -39,7 +39,10 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
     # prepare some storage arrays that we will make use of throughout the computation
     U, L, G_array, P_array, g, grad = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
 
-    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob)
+    wts = ones(prob.n_ensemble)
+    evolve_store = similar(U[:,1][1])
+
+    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob, evolve_store, wts)
 
 
     # generate a random initial guess for the algorithm if the user hasn't provided one

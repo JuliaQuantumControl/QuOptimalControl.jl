@@ -44,9 +44,6 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
 
     test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob, evolve_store, wts)
 
-
-    # generate a random initial guess for the algorithm if the user hasn't provided one
-    # init = rand(prob.n_controls, prob.n_timeslices) .* 0.001
     init = prob.initial_guess
 
     res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_trace = true))
@@ -66,7 +63,6 @@ function _solve(prob::ClosedStateTransfer, alg::GRAPE_AD)
         C2(prob.X_target, (U * prob.X_init * U'))
     end
 
-    # init = rand(prob.n_controls, prob.n_timeslices) .* 0.001
     init = prob.initial_guess
     res = ADGRAPE(user_functional, init)
 
@@ -158,7 +154,7 @@ function _solve(prob::Experiment, alg::dCRAB_options)
 end
 
 """
-Can we combine algorithms to improve how we solve things? From Discussion with Phila
+Can we combine algorithms to improve how we solve things? Comes from discussion with Phila
 """
 function hybrid_solve(prob, alg_list)
     for alg in alg_list

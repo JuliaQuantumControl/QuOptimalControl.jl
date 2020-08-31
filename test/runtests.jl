@@ -1,8 +1,102 @@
+
+
 using QuOptimalControl
 using Test
 
 @testset "QuOptimalControl.jl" begin
-    # Write your tests here.
+
+
+    # test GRAPE initially
+    # closed state trnasfer problem initially
+
+    ρinit = [1.0 0.0]' * [1.0 0.0+0im]
+    ρfin = [0.0 1.0]' * [0.0 1.0+0im]
+    
+    prob = ClosedStateTransfer(
+        B = [σx, σy],
+        A = [σz],
+        X_init = [ρinit],
+        X_target = [ρfin],
+        duration = 1.0,
+        n_timeslices = 10,
+        n_controls = 2,
+        n_ensemble = 1,
+        norm2 = 1.0,
+        alg = GRAPE_approx(),
+        initial_guess = rand(2, 10)
+    )
+
+    sol = solve(prob)
+
+    # check if the result is close to the target or not
+    
+
+
+    # check if we can do unitary synthesis for a pi pulse
+    U_init = Matrix{ComplexF64}(I(2))
+    ϕ = π
+    U_final = Matrix{ComplexF64}([cos(ϕ) sin(ϕ); -sin(ϕ) cos(ϕ)])
+
+    prob = UnitarySynthesis(
+        B = [σx, σy],
+        A = [σz],
+        X_init = [U_init],
+        X_target = [U_final],
+        duration = 1.0,
+        n_timeslices = 10,
+        n_controls = 2,
+        n_ensemble = 1,
+        norm2 = 1.0,
+        alg = GRAPE_approx(),
+        initial_guess = rand(2, 10)
+    )
+
+
+    sol = solve(prob)
+
+    # we need to test the open system
+
+    # prob = OpenSystemCoherenceTransfer(
+    #     B = [σx, σy],
+    #     A = [σz],
+    #     X_init = [ρinit],
+    #     X_target = [ρfin],
+    #     duration = 1.0,
+    #     n_timeslices = 10,
+    #     n_controls = 2,
+    #     n_ensemble = 1,
+    #     norm2 = 1.0,
+    #     alg = GRAPE_approx(),
+    #     initial_guess = rand(2, 10)
+    # )
+
+
+    # sol = solve(prob)
+
+
+
+    # lets test the dCRAB algorithms
+
+    prob = ClosedStateTransfer(
+        B = [σx, σy],
+        A = [σz],
+        X_init = [ρinit],
+        X_target = [ρfin],
+        duration = 1.0,
+        n_timeslices = 10,
+        n_controls = 2,
+        n_ensemble = 1,
+        norm2 = 1.0,
+        alg = dCRAB_options(),
+        initial_guess = rand(2, 10)
+    )
+
+    sol = solve(prob)
+
+
+
+
+    # lets test the AD algorithms
 
     # okay we want to have some interface that looks like this
 

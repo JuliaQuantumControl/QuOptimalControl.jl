@@ -42,59 +42,6 @@ function ADGRAPE()
 
 end
 
-
-"""
-Function that is compatible with Optim.jl, takes Hamiltonians, states and some other information and returns either the value of the functional (in this case its an overlap) or a first order approximation of the gradient. Here we don't explicitly solve the problem using Optim, that's handled elsewhere for now (which might need changed).
-"""
-# TODO - Shai has this Dynamo paper where he gives an exact gradient using the eigen function of the linear algebra library
-function OLD_GRAPE(F, G, H_drift, H_ctrl_arr, ρ, ρₜ, x_drive, n_ctrls, dt, n_steps)
-    @warn "this was my first try at GRAPE, its inflexible and unused now"
-    # compute the propgators
-    U_list = pw_evolve_save(H_drift[1], H_ctrl_arr, x_drive, n_ctrls, dt, n_steps)
-
-    # now we propagate the initial state forward in time
-    ρ_list = [ρ] # need to give it a type it ρ
-    temp_state = ρ
-    for U in U_list
-        temp_state = U * temp_state * U'
-        append!(ρ_list, [temp_state])
-    end
-
-    ρₜ_list = [ρₜ] # can also type this or do something else
-    temp_state = ρₜ
-    for U in reverse(U_list)
-        temp_state = U' * temp_state * U
-        append!(ρₜ_list, [temp_state])
-    end
-    ρₜ_list = reverse(ρₜ_list)
-
-    # approximate gradient from Glaser paper is used here
-
-    
-    # compute total propagator
-    U = reduce(*, U_list)
-    # now lets compute the infidelity to minimize
-
-    fid = C1(ρₜ, (U * ρ * U'))
-    
-    if G !== nothing
-        grad = similar(x_drive)
-        for k = 1:n_ctrls
-            for j = 1:n_steps
-                grad[k, j] = real(tr((ρₜ_list[j])' * 1.0im * dt * commutator(H_ctrl_arr[k], ρ_list[j])))
-                # grad[k, j] = -real(tr(ρₜ_list[j + 1]' * commutator(H_ctrl_arr[k], U_list[j]) * ρ_list[j])) * pc
-            end
-        end
-        G .= grad
-    end
-
-    if F !== nothing
-        return fid
-    end
-
-end
-
-# using a problem definition we can initialise all of the internal storage arrays
 """
 Initialise all the storage arrays for a GRAPE optimisation
 """
@@ -113,11 +60,10 @@ end
 
 
 """
-More flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
+Flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
 Note: this code updates the arrays passed to it in place, this means it doesn't allocate memory but things can get messy
 """
 function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
-    # since we pass a problem definition anyway, so that we can dispatch to the right methods, we can use the defined values inside?
 
     dt = duration / n_timeslices
     for k = 1:n_ensemble

@@ -74,7 +74,7 @@ import Base./
 
 # first diffrule needed
 @diffrule abs(x::Number) x x / sqrt(real(x)^2 + imag(x)^2)
-@diffrule abs2(x::Number) x 
+@diffrule abs2(x::Number) x abs(x)^2
 @diffrule (/)(u::Array{ComplexF64,2}, v::Number) u dy / v
 # expand list of rules for (*) to match complex numbers and arrays
 @diffrule *(u::Number, v::Number)            u     v * dy

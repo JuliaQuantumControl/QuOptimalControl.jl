@@ -79,3 +79,24 @@ init = rand(problem.number_pulses, problem.timeslices) .* 0.0001
 using Optim
 res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false))
 
+
+
+
+H_ctrl = [sx, sy]
+H_drift = [sz]
+n_pulses = length(H_ctrl)
+duration = 5
+n_timeslices = 10
+timestep = duration / n_timeslices
+ctrl_arr = rand(n_pulses, n_timeslices)
+P_list = pw_evolve_save(H_drift[1], H_ctrl, ctrl_arr, n_pulses, timestep, n_timeslices)
+
+X_init = ρ
+states = similar(P_list)
+states[1] = X_init
+for i = 2:n_timeslices
+    states[i] = P_list[i - 1] * states[i - 1]
+end
+
+z = [real(tr(sz * i)) for i in states]
+

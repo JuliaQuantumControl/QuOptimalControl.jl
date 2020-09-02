@@ -92,32 +92,47 @@ We need to be able to use all of the following algorithms in both open and close
 
 ### GRAPE
 
-**Citation needed**
-
-Algorithm originally developed by the Glaser group, approximate gradient implementation is already here. Exact gradients from the Dynamo package need to be implemented for all of the cases of interest
+- [ ] Citation of relevant papers
+- [ ] Exact gradients from Shai
+- [ ] Exact gradients from Steffen
+- [ ] Scaling and squaring method
 
 #### ADGRAPE
 
-David Schuster's lab pioneered this idea, essentially use autodiff to compute the gradient of the functional so that you can follow it. Really simple with Zygote but its pretty memory hungry, we can make this more efficient.
+- [ ] Citation of relevant papers
+- [ ] Yota implementation open+closed system (incl. different expm methods)
+- [ ] Zygote implementation open system
 
-Also want to implement it using Yota.jl because it seems that it's pretty optimised for speed. (We can use Zygote as the fallback for the open system case)
+
+David Schuster's lab pioneered this idea, essentially use autodiff to compute the gradient of the functional so that you can follow it. Really simple with Zygote but its pretty memory hungry, we can make this more efficient.
 
 ### GOAT
 
-Shai's new algorithm, given the ability of DiffEq.jl we should be able to have the fastest version of this code.
-
+- [ ] Citation of relevant papers
+- [ ] Implement possibly working prototype
 
 ### dCRAB
 
-Fourier (or other basis) expansion of pulse and then optimisation of coefficients using Nelder-Mead. Currently seems to work.
+- [ ] Citation of relevant papers
+- [ ] Fix initial conditions
+- [ ] Open system master equation
+- [ ] Non Nelder-Mead optimisation
+
 
 **Remote usage** should be possible with this package, see the example where the user defined function simply saves a pulse and then runs some experiment before returning something.
 
 ### Krotov
 
-Monotonic convergence is the name of the game here, not sure that I have the skills to implement it but since I'm a member of QuSCo it's important!
+- [ ] Citation of relevant papers
+- [ ] Working implementation needed
+
+Monotonic convergence is the name of the game here, not sure that I have the skills to implement it!
 
 ### GROUP
 
-Jacob Sherson's group used gradient optimisation of the coefficients of a dCRAB expansion. Impressive work and curious if it's easy to implement, especially given how easy it is to use Zygote. 
+- [ ] Citation of relevant papers
+- [ ] Combine this with work by Dennis Lucarelli
+- [ ] working implementation needed!
 
+
+Curious to see how this works

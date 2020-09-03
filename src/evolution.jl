@@ -101,7 +101,7 @@ An almost allocation free (1 alloc in my tests) version of the Generator saving 
 function pw_gen_save!(prob::Union{ClosedStateTransfer,UnitarySynthesis}, H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, duration, out) where T
     K = n_pulses
     Htot = similar(H₀)
-    dt = timeslices / duration
+    dt = duration/timeslices
 
     @views @inbounds for i = 1:timeslices
         @. Htot = 0.0 * Htot

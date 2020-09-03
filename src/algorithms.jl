@@ -28,7 +28,7 @@ Compute the gradient of a functional f(x) wrt. x
 function ADGRAPE(functional, x; g_tol = 1e-6)
 
     function grad_functional!(G, x)
-        G .= Zygote.gradient(functional, x)[1]
+        @views G .= Zygote.gradient(functional, x)[1]
     end
     
     res = optimize(functional, grad_functional!, x, LBFGS(), Optim.Options(g_tol = g_tol, show_trace = true, store_trace = true))

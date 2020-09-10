@@ -95,3 +95,52 @@ Zygote.refresh()
 
 using FiniteDiff
 FiniteDiff.finite_difference_gradient(functional, x_input)
+
+
+
+
+# petersson 2020 test
+using QuantumInformation
+using DifferentialEquations
+
+
+u = collect([1 0.0]')
+v = collect([0 0.0]')
+
+ω = 2π
+N = 2
+
+K(t) = 1/4 * (1 - cos(ω * t)) * real(sx)
+S(t) = imag(sx)
+
+# 0:0.01:5π
+tspan = (0, 5π)
+
+
+# lets think about stuff here
+function lhs(du, u, p, t)
+    # u is first entry, v is second
+    
+    du[:,1] = S(t) * u[:,1] - K(t) * u[:,2]
+    du[:,2] = K(t) * u[:,1] + S(t) * u[:,2]
+end
+
+
+u0 = [u v]
+prob = ODEProblem(lhs, u0, tspan)
+
+
+x = similar(u0)
+lhs(x, u0, 0, 0.1)
+
+
+sol = solve(prob, alg = Tsit5())
+
+
+us = [sol.u[i][:,1] for i = 1:length(sol.u)]
+vs = [sol.u[i][:,2] for i = 1:length(sol.u)]
+
+
+using Plots
+plot(us)
+plot!(vs)

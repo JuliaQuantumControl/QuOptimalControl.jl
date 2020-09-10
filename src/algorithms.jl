@@ -93,7 +93,7 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
         for c = 1:n_controls
             for t = 1:n_timeslices
                 # might want to alter this to just pass the matrices that matter rather than everything
-                @views grad[k, c, t] = grad_func(prob, t, dt, k, B[c], U, L, P_list, Gen, evolve_store)
+                @views grad[k, c, t] = grad_func(prob, t, dt, k, B[k][c], U, L, P_list, Gen, evolve_store)
             end
         end
             

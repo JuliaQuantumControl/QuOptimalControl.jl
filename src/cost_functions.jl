@@ -14,7 +14,6 @@ Target-gate fidelity
 """
 function C1(KT, KN)
     D = size(KT)[1]
-    D = 1
     1 - abs2(tr(KT' * KN) / D)
 end
 
@@ -59,7 +58,7 @@ end
 Evolution time (target state)
 """
 function C7(ψT, ψJ, N)
-    1 - 1 / N * sum(abs2(tr(ψT, ψj)) for ψj in ψJ)
+    1 - 1 / N * sum(abs2(tr(ψT * ψj)) for ψj in ψJ)
 end
 
 
@@ -82,7 +81,7 @@ function fom_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen)::Float64
 end
 
 function fom_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen)::Float64
-    # recall that target is alwaus the last entry of L
+    # recall that target is always the last entry of L
     # and that we have in U[end] the propagated forward target state
-    @views C1(L[end, k], U[end, k])
+    @views C1(L[t, k], U[t, k])
 end

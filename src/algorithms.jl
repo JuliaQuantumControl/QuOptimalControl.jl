@@ -74,7 +74,7 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
         # do we need to actually save the generators of the transforms or do we simply need the propagators?
         pw_ham_save!(A[k], B[k], x, n_controls, n_timeslices, @view Gen[:,k])
         # @views P_list[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
-        @views P_list[:, k] .= exp(Gen[:, k] .* (-1.0im * dt))
+        @views P_list[:, k] .= exp.(Gen[:, k] .* (-1.0im * dt))
 
         # forward propagate
         for t = 1:n_timeslices

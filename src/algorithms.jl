@@ -72,12 +72,9 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
 
 
         # do we need to actually save the generators of the transforms or do we simply need the propagators?
-        # why does this sometimes fail?
-        pw_ham_save!(A[k], B, x, n_controls, n_timeslices, @view Gen[:,k])
-        # we can probably do this better I think
-        # not sure about whether to use exp or this exp! here
-        # could do multiple dispatch... to a something
-        @views P_list[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
+        pw_ham_save!(A[k], B[k], x, n_controls, n_timeslices, @view Gen[:,k])
+        # @views P_list[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
+        @views P_list[:, k] .= exp(Gen[:, k] .* (-1.0im * dt))
 
         # forward propagate
         for t = 1:n_timeslices
@@ -93,7 +90,6 @@ function GRAPE!(F, G, x, U, L, Gen, P_list, g, grad, A, B, n_timeslices, n_ensem
         g[k] = fom_func(prob, t, k, U, L, P_list, Gen)
 
         # we can optionally compute this actually
-        # in order for this to be general it uses looks for a gradient definition function
         for c = 1:n_controls
             for t = 1:n_timeslices
                 # might want to alter this to just pass the matrices that matter rather than everything

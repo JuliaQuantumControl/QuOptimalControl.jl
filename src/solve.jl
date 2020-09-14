@@ -37,17 +37,16 @@ ClosedSystem using approximation gradient of GRAPE uses this function to solve.
 function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx)
 
     # prepare some storage arrays that we will make use of throughout the computation
-    U, L, G_array, P_array, g, grad = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
+    U, L, gens, props, fom, gradient = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
 
     wts = ones(prob.n_ensemble)
     evolve_store = similar(U[:,1][1])
 
-    test = (F, G, x) -> GRAPE!(F, G, x, U, L, G_array, P_array, g, grad, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob, evolve_store, wts)
+    test = (F, G, x) -> GRAPE!(F, G, x, U, L, gens, props, fom, gradient, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob, evolve_store, wts)
 
     init = prob.initial_guess
 
     res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_trace = true))
-    # TODO we need to decide on a common appearance for these SolutionResult structs
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 
     return solres
@@ -84,7 +83,7 @@ function _solve(prob::ClosedStateTransfer, alg::dCRAB_options)
         C1(prob.X_target, U * prob.X_init)
     end
 
-    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
@@ -105,7 +104,7 @@ function _solve(prob::UnitarySynthesis, alg::dCRAB_options)
         C1(prob.X_target, (U * prob.X_init * U'))
     end
 
-    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 
@@ -147,7 +146,7 @@ function _solve(prob::Experiment, alg::dCRAB_options)
         infid = readdlm(prob.infidelity_path)[1]
     end
 
-    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, user_functional)
+    coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)
 
     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
 

@@ -43,7 +43,7 @@ function ADGRAPE()
 end
 
 """
-Initialise all the storage arrays for a GRAPE optimisation
+Initialise all the storage arrays that will be used in a GRAPE optimisation
 """
 function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
     U = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]

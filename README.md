@@ -56,6 +56,15 @@ visualise_pulse(sol.optimised_pulses, duration = 1.0)
 
 ### How does it work?
 
+#### What problem are we trying to solve?
+
+$$
+\dot{X}(t) = (A + B u(t)) X(t)
+$$
+
+Where A is the "drift" term and B is the "control" term and $u(t)$ are time dependent control amplitudes that allow us to modify the state of the system.
+
+
 We utilise Julia's multiple dispatch (where the Julia compiler decides which code to run based on the types of the problem) to keep the code clean. This means that when the solve function is called it passes over to a specific implementation of the algorithm for the problem in hand.
 
 Using GRAPE as an example, there is a lot of similarity between different problem types when calculating the propagators but the gradient, figure of merit and evolution functions are different. We use multiple dispatch to choose the correct set of functions (this doesn't incur any time cost because the types are known). 

@@ -65,7 +65,7 @@ end
 Flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
 Note: this code updates the arrays passed to it in place, this means it doesn't allocate memory but things can get messy
 """
-function GRAPE!(F, G, x, U, L, gens, props, g, gradient, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
+function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
 
     dt = duration / n_timeslices
     for k = 1:n_ensemble

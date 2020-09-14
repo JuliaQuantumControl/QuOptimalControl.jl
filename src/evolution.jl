@@ -27,7 +27,7 @@ Given a set of Hamiltonians (drift and control) compute the evolution, Zygote co
 lets dispatch to this properly sometime
 """
 function pw_evolve_T(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices)::T where T
-    x_arr = real.(complex.(x_arr)) # needed for Zygote to use complex numbers internally
+    x_arr = complex.(real.(x_arr)) # needed for Zygote to use complex numbers internally
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
     U0 = T(I(D))
@@ -62,16 +62,14 @@ end
 
 
 """
-Function to compute the Hamiltonians for a piecewise constant control and save them. This is useful in many stages
+Function to compute the Hamiltonians for a piecewise constant control and save them. Low allocations when used with StaticArrays!
 """
 function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices) where T
     D = size(H₀)[1] # get dimension of the system
-    K = n_pulses
     out = Vector{T}(undef, timeslices)
-    U0 = T(I(D)) # I think this works like I want
     for i = 1:timeslices
         Htot = H₀
-        for j = 1:K
+        for j = 1:n_pulses
             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
         out[i] = Htot

@@ -62,8 +62,7 @@ end
 
 
 """
-Flexible GRAPE algorithm, should be able to handle all cases from the original Khaneja et al. paper (need citation)
-Note: this code updates the arrays passed to it in place, this means it doesn't allocate memory but things can get messy
+Flexible GRAPE algorithm that can use any array type to solve GRAPE problems. This is best when your system is so large that StaticArrays cannot be used! The arrays given will be updated in place!
 """
 function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
 
@@ -95,7 +94,7 @@ function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n
         for c = 1:n_controls
             for t = 1:n_timeslices
                 # might want to alter this to just pass the matrices that matter rather than everything
-                @views gradient[k, c, t] = grad_func(prob, t, dt, k, B[k][c], U, L, props, gens, evolve_store)
+                @views gradient[k, c, t] = grad_func!(prob, t, dt, k, B[k][c], U, L, props, gens, evolve_store)
             end
         end
             
@@ -112,6 +111,47 @@ function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n
 
 end
 
+
+"""
+Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
+"""
+function GRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient_store, U_k, L_k, xinit, xtarget) where T
+    
+    dt = duration / n_timeslices
+    # arrays that hold static arrays?
+    U_k[1] = xinit
+    L_k[end] = xtarget
+
+
+    # now we want to compute the generators 
+    gens = pw_ham_save(A, B, u_c, n_controls,n_timeslices)
+    props = exp.(gens .* (-1.0im * dt))
+
+
+    # forward evolution of states
+    for t = 1:n_timeslices
+        U_k[t+1] = evolve_func(prob, t, U_k, L_k, props, 1, 1, forward = true)
+    end
+    # backward evolution of costates
+    for t = reverse(1:n_timeslices)
+        L_k[t] = evolve_func(prob, t, U_k, L_k, props, 1, 1, forward = false)
+    end
+
+    t = n_timeslices
+
+    # update the gradient array
+    for c = 1:n_controls
+        for t = 1:n_timeslices
+            # @views gradient_store[c, t] = real((1.0im * dt) .* tr(L_k[t]' * commutator(B[c], U_k[t]) ))
+            # real(tr( L_k[t]' * (1.0im * dt) * commutator(B[c], U_k[t]) ))
+            @views gradient_store[c, t] = grad_func(prob, t, dt, B, U, L, props, gens)
+
+        end
+    end
+
+
+    return C1(L_k[t], U_k[t])
+end
 
 """
 Using the dCRAB method to perform optimisation of a pulse. 

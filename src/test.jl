@@ -57,12 +57,10 @@ function static_grape(A::T, B, u_c, n_timeslices, duration, n_controls, gradient
     # forward evolution of states
     for t = 1:n_timeslices
         U_k[t+1] = my_evolvefn(t, U_k, L_k, props, 1, 1, forward = true)
-        # U_k[t+1] = props[t] * U_k[t] * props[t]'
     end
+    # backward evolution of costates
     for t = reverse(1:n_timeslices)
         L_k[t] = my_evolvefn(t, U_k, L_k, props, 1, 1, forward = false)
-
-        # L_k[t] = props[t]' * L_k[t+1] * props[t]
     end
 
     t = n_timeslices
@@ -75,7 +73,7 @@ function static_grape(A::T, B, u_c, n_timeslices, duration, n_controls, gradient
 
         end
     end
-
+    grad_func(prob, t, dt, B, U, L, props, gens)
 
     return C1(L_k[t], U_k[t])
 
@@ -112,3 +110,22 @@ function my_evolvefn(t, U, L, P_list, Gen, store;forward = true)
         P_list[t]' * L[t + 1] * P_list[t]
     end
 end
+
+
+function bench(t, dt, B, U, L, props, gens)
+    -2.0 * real((-1.0im * dt)* 
+        tr(L[t]' * B * U[t]) * tr(U[t]' * L[t]) 
+    )
+end
+
+
+function bench2(t, dt, B, U, L, props, gens)
+    real(
+        tr(
+            (1.0im * dt) * (L[t]' * commutator(B, U[t]))
+        )
+    )
+end
+
+
+@benchmark bench2($1, $dt, $B[1], $Ut, $Lt, $1, $1)

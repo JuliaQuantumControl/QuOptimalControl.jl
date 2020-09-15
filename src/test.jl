@@ -131,38 +131,51 @@ end
 @benchmark bench2($1, $dt, $B[1], $Ut, $Lt, $1, $1)
 
 
-function GRAPE_testing!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target) where T
+function GRAPE_testing!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
     dt = duration / n_timeslices
     U_k[1] .= X_init
     L_k[end] .= X_target
 
     pw_ham_save!(A, B, u_c, n_controls, n_timeslices, @view gens[:])
-    @views props[:] .= exp.(gens[:] .* (-1.0im * dt))
+    @views props[:] .= exp.(gens[:] * (-1.0im * dt))
+
+    for t = 1:n_timeslices
+        evolve_func!(t, 1, U_k, L_k, props, gens, evolve_store, forward = true)
+    end
+
+    for t = reverse(1:n_timeslices)
+        evolve_func!(t, 1, U_k, L_k, props, gens, evolve_store, forward = false)
+    end
+
+    t = n_timeslices
+    
+    for c = 1:n_controls
+        for t = 1:n_timeslices
+            @views gradient[c, t] = grad_func2!(t, dt, B[c], U_k, L_k, props, gens, evolve_store)
+        end
+    end
+
 end
+function grad_func2!(t, dt, B, U, L, props, gens, store)::Float64
+    @views mul!(store, L[t]', commutator(B, U[t]))
+
+    real(tr((1.0im * dt) .* store))
+end
+
 
 Aarray = Array(A)
 Barray = Array.(B)
 ρ0A = Array(ρ0)
 ρTA = Array(ρT)
 
-
 UtA, LtA, gensA, propsA, domA, gradientA = QuOptimalControl.init_GRAPE(ρ0A, n_timeslices, 1, Aarray, n_controls)
 
-test_gen = -1.0im * dt * sz
-test_genA = -1.0im * dt * Array(sz)
+evs = similar(gensA[1])
+@benchmark GRAPE_testing!($Aarray, $Barray, $u_c, $n_timeslices, $duration, $n_controls, $gradientA[1,:,:], $UtA, $LtA, $gensA, $propsA, $ρ0A, $ρTA, $evs, $Val(ClosedStateTransfer))
 
-@benchmark exp($test_gen)
-@benchmark exp($test_genA)
+@benchmark commutator($B[1], $UtA[1])
 
-@benchmark exp($test_genA)
-# @btime ExponentialUtilities._exp!(x) setup = (x = copy(test_genA))
-b = @benchmarkable ExponentialUtilities._exp!(x) setup = (x = copy($test_genA))
-run(b)
-
-@benchmark exp_generic($test_genA)
-
-
-
+@benchmark GRAPE_testing!($Aarray, $Barray, $u_c, $n_timeslices, $duration, $n_controls, $1.0, $UtA, $LtA, $gensA, $propsA, $ρ0A, $ρTA)
 
 @benchmark GRAPE_testing!($Aarray, $Barray, $u_c, $n_timeslices, $duration, $n_controls, $1.0, $UtA, $LtA, $gensA, $propsA, $ρ0A, $ρTA)
 

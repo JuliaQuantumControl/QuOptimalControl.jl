@@ -111,6 +111,33 @@ function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n
 
 end
 
+function GRAPE_testing!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
+    dt = duration / n_timeslices
+    U_k[1] .= X_init
+    L_k[end] .= X_target
+
+    pw_ham_save!(A, B, u_c, n_controls, n_timeslices, @view gens[:])
+    @views props[:] .= exp.(gens[:] * (-1.0im * dt))
+
+    for t = 1:n_timeslices
+        evolve_func!(prob, t, 1, U_k, L_k, props, gens, evolve_store, forward = true)
+    end
+
+    for t = reverse(1:n_timeslices)
+        evolve_func!(prob, t, 1, U_k, L_k, props, gens, evolve_store, forward = false)
+    end
+
+    t = n_timeslices
+    
+    for c = 1:n_controls
+        for t = 1:n_timeslices
+            @views gradient[c, t] = grad_func!(prob, t, dt, B[c], U_k, L_k, props, gens, evolve_store)
+        end
+    end
+
+    return fom_func(prob, t, U_k, L_k, props, gens)
+
+end
 
 """
 Static GRAPE

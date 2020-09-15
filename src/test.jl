@@ -129,3 +129,87 @@ end
 
 
 @benchmark bench2($1, $dt, $B[1], $Ut, $Lt, $1, $1)
+
+
+function GRAPE_testing!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target) where T
+    dt = duration / n_timeslices
+    U_k[1] .= X_init
+    L_k[end] .= X_target
+
+    pw_ham_save!(A, B, u_c, n_controls, n_timeslices, @view gens[:])
+    @views props[:] .= exp.(gens[:] .* (-1.0im * dt))
+end
+
+Aarray = Array(A)
+Barray = Array.(B)
+ρ0A = Array(ρ0)
+ρTA = Array(ρT)
+
+
+UtA, LtA, gensA, propsA, domA, gradientA = QuOptimalControl.init_GRAPE(ρ0A, n_timeslices, 1, Aarray, n_controls)
+
+test_gen = -1.0im * dt * sz
+test_genA = -1.0im * dt * Array(sz)
+
+@benchmark exp($test_gen)
+@benchmark exp($test_genA)
+
+@benchmark exp($test_genA)
+# @btime ExponentialUtilities._exp!(x) setup = (x = copy(test_genA))
+b = @benchmarkable ExponentialUtilities._exp!(x) setup = (x = copy($test_genA))
+run(b)
+
+@benchmark exp_generic($test_genA)
+
+
+
+
+@benchmark GRAPE_testing!($Aarray, $Barray, $u_c, $n_timeslices, $duration, $n_controls, $1.0, $UtA, $LtA, $gensA, $propsA, $ρ0A, $ρTA)
+
+
+function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
+
+    dt = duration / n_timeslices
+    for k = 1:n_ensemble
+        U[1, k] = prob.X_init[k]
+        L[end, k] = prob.X_target[k]
+
+
+        # do we need to actually save the generators of the transforms or do we simply need the propagators?
+        pw_ham_save!(A[k], B[k], x, n_controls, n_timeslices, @view gens[:,k])
+        # @views props[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
+        @views props[:, k] .= exp.(gens[:, k] .* (-1.0im * dt))
+
+        # forward propagate
+        for t = 1:n_timeslices
+            evolve_func!(prob, t, k, U, L, props, gens, evolve_store, forward = true)
+        end
+        
+        # prob backwards in time
+        for t = reverse(1:n_timeslices)
+            evolve_func!(prob, t, k, U, L, props, gens, evolve_store, forward = false)
+        end
+        
+        t = n_timeslices # can be chosen arbitrarily
+        fom[k] = fom_func(prob, t, k, U, L, props, gens)
+
+        # we can optionally compute this actually
+        for c = 1:n_controls
+            for t = 1:n_timeslices
+                # might want to alter this to just pass the matrices that matter rather than everything
+                @views gradient[k, c, t] = grad_func!(prob, t, dt, k, B[k][c], U, L, props, gens, evolve_store)
+            end
+        end
+            
+    end
+
+    # then we average over everything
+    if G !== nothing
+        @views G .= sum(weights .* gradient, dims = 1)[1,:, :]
+    end
+
+    if F !== nothing
+        return sum(fom .* weights)
+    end
+
+end

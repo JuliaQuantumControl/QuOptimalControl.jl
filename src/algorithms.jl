@@ -113,6 +113,8 @@ end
 
 
 """
+Static GRAPE
+
 Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
 """
 function GRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient_store, U_k, L_k, xinit, xtarget) where T
@@ -142,15 +144,12 @@ function GRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient_store,
     # update the gradient array
     for c = 1:n_controls
         for t = 1:n_timeslices
-            # @views gradient_store[c, t] = real((1.0im * dt) .* tr(L_k[t]' * commutator(B[c], U_k[t]) ))
-            # real(tr( L_k[t]' * (1.0im * dt) * commutator(B[c], U_k[t]) ))
             @views gradient_store[c, t] = grad_func(prob, t, dt, B, U, L, props, gens)
 
         end
     end
 
-
-    return C1(L_k[t], U_k[t])
+    return fom_func(prob, t, U, L, props, gens)
 end
 
 """

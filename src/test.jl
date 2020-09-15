@@ -56,10 +56,13 @@ function static_grape(A::T, B, u_c, n_timeslices, duration, n_controls, gradient
 
     # forward evolution of states
     for t = 1:n_timeslices
-        U_k[t+1] = props[t] * U_k[t] * props[t]'
+        U_k[t+1] = my_evolvefn(t, U_k, L_k, props, 1, 1, forward = true)
+        # U_k[t+1] = props[t] * U_k[t] * props[t]'
     end
     for t = reverse(1:n_timeslices)
-        L_k[t] = props[t]' * L_k[t+1] * props[t]
+        L_k[t] = my_evolvefn(t, U_k, L_k, props, 1, 1, forward = false)
+
+        # L_k[t] = props[t]' * L_k[t+1] * props[t]
     end
 
     t = n_timeslices
@@ -94,7 +97,18 @@ real(tr(Lt[1000]' * (1.0im * dt) .* commutator(B[1], Ut[1000])))
 
 @benchmark static_grape($A, $B, $u_c, $n_timeslices, $duration,  $n_controls, $res, $Ut, $Lt, $ρ0, $ρT)
 
+@benchmark static_grape($A, $B, $u_c, $n_timeslices, $duration,  $n_controls, $res, $Ut, $Lt, $ρ0, $ρT)
+
 res = gradient[1, :, :]
 
 static_grape(A, B, u_c, n_timeslices, duration, n_controls,res , Ut, Lt, ρ0, ρT)
 
+
+
+function my_evolvefn(t, U, L, P_list, Gen, store;forward = true)
+    if forward
+        P_list[t] * U[t] * P_list[t]'
+    else
+        P_list[t]' * L[t + 1] * P_list[t]
+    end
+end

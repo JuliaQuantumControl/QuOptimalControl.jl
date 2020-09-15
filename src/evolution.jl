@@ -123,21 +123,22 @@ Evolution functions for various GRAPE tasks
 """
 Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
 """
-
-# ask someone if I've gone mad about using multiple dispatch here....
-function evolve_func(prob::UnitarySynthesis, t, k, U, L, P_list, Gen, store; forward = true)
+function evolve_func(prob::UnitarySynthesis, t, U, L, props, gens; forward = true)
     if forward
-        P_list[t, k] * U[t, k]
+        props[t] * U[t]
     else
-        P_list[t,k]' * L[t + 1, k]
+        props[t]' * L[t + 1]
     end
 end
 
-function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen, store;forward = true)
+"""
+Evolution function for use with density matrices
+"""
+function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, props, gens ;forward = true)
     if forward
-        P_list[t, k] * U[t, k] * P_list[t, k]'
+        props[t] * U[t] * props[t]'
     else
-        P_list[t, k]' * L[t + 1, k] * P_list[t, k]
+        props[t]' * L[t + 1] * props[t]
     end
 end
 
@@ -146,24 +147,24 @@ end
 """
 In-place evolution functions 
 """
-function evolve_func!(prob::UnitarySynthesis, t, k, U, L, P_list, Gen, store; forward = true)
+function evolve_func!(prob::UnitarySynthesis, t, k, U, L, props, gens, store; forward = true)
     if forward
-        @views mul!(U[t+1, k], P_list[t, k], U[t, k])
+        @views mul!(U[t+1, k], props[t, k], U[t, k])
     else
-        @views mul!(L[t, k], P_list[t, k]', L[t+1, k])
+        @views mul!(L[t, k], props[t, k]', L[t+1, k])
     end
 end
 
 """
 In-place evolution functions, I think these don't allocate at all
 """
-function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, P_list, Gen, store; forward = true)
+function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, props, gens, store; forward = true)
     if forward
-        @views mul!(store, U[t, k], P_list[t, k]')
-        @views mul!(U[t+1, k], P_list[t, k], store)
+        @views mul!(store, U[t, k], props[t, k]')
+        @views mul!(U[t+1, k], props[t, k], store)
     else
-        @views mul!(store, L[t+1, k], P_list[t, k])
-        @views mul!(L[t, k], P_list[t, k]',  store)
+        @views mul!(store, L[t+1, k], props[t, k])
+        @views mul!(L[t, k], props[t, k]',  store)
     end
 end
 

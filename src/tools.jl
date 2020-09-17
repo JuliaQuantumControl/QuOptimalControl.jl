@@ -26,6 +26,23 @@ end
 
 
 
+"""
+Initialise all the storage arrays that will be used in a GRAPE optimisation
+"""
+function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
+    # states
+    U = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
+    # costates
+    L = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
+    # list of generators
+    gens = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
+    # exp(gens)
+    props = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
+
+    fom = zeros(n_ensemble)
+    gradient = zeros(n_ensemble, n_controls, n_timeslices)
+    return (U, L, gens, props, fom, gradient)
+end
 
 
 

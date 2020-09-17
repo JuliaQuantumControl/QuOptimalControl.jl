@@ -14,6 +14,7 @@ Target-gate infidelity
 """
 function C1(KT, KN)
     D = size(KT)[1]
+    D = 1
     1 - abs2(tr(KT' * KN) / D)
 end
 
@@ -91,7 +92,5 @@ function fom_func(prob::UnitarySynthesis, t, U, L, props, gens)::Float64
 end
 
 function fom_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, U, L, props, gens)::Float64
-    # recall that target is always the last entry of L
-    # and that we have in U[end] the propagated forward target state
     @views C1(L[t], U[t])
 end

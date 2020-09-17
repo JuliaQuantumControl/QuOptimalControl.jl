@@ -42,24 +42,6 @@ function ADGRAPE()
 
 end
 
-"""
-Initialise all the storage arrays that will be used in a GRAPE optimisation
-"""
-function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
-    # states
-    U = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
-    # costates
-    L = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
-    # list of generators
-    gens = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
-    # exp(gens)
-    props = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
-
-    fom = zeros(n_ensemble)
-    gradient = zeros(n_ensemble, n_controls, n_timeslices)
-    return (U, L, gens, props, fom, gradient)
-end
-
 
 """
 Flexible GRAPE algorithm that can use any array type to solve GRAPE problems. This is best when your system is so large that StaticArrays cannot be used! The arrays given will be updated in place!
@@ -144,7 +126,7 @@ Static GRAPE
 
 Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
 """
-function GRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, X_init, X_target, prob) where T
+function sGRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, X_init, X_target, prob) where T
     
     dt = duration / n_timeslices
     # arrays that hold static arrays?
@@ -159,11 +141,11 @@ function GRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, 
 
     # forward evolution of states
     for t = 1:n_timeslices
-        U_k[t+1] = evolve_func(prob, t, U_k, L_k, props, 1, 1, forward = true)
+        U_k[t+1] = evolve_func(prob, t, U_k, L_k, props, gens, forward = true)
     end
     # backward evolution of costates
     for t = reverse(1:n_timeslices)
-        L_k[t] = evolve_func(prob, t, U_k, L_k, props, 1, 1, forward = false)
+        L_k[t] = evolve_func(prob, t, U_k, L_k, props, gens, forward = false)
     end
 
     t = n_timeslices
@@ -171,7 +153,7 @@ function GRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, 
     # update the gradient array
     for c = 1:n_controls
         for t = 1:n_timeslices
-            @views gradient[c, t] = grad_func(prob, t, dt, B, U, L, props, gens)
+            @views gradient[c, t] = grad_func(prob, t, dt, B[c], U_k, L_k, props, gens)
 
         end
     end

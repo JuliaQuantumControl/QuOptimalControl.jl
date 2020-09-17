@@ -34,7 +34,7 @@ end
 """
 Visualise the expectation value of an array of ops under the evoltuion of the ctrl_arr, at the moment we will ask for both the problem and the solution. 
 """
-function visualise_expt_val(H_drift::K, H_ctrl, ctrl_arr, duration, n_timeslices, X_init::T, ops::Array{K,1}, labels) where {T,K}
+function visualise_expt_vals(H_drift::K, H_ctrl, ctrl_arr, duration, n_timeslices, X_init::T, ops::Array{K,1}, labels) where {T,K}
     N = length(ops)
     p = []
     for i = 1:N

@@ -10,7 +10,7 @@ Needs citation from the Schuster lab paper
 # include("./problems.jl")
 
 """
-Target-gate fidelity
+Target-gate infidelity
 """
 function C1(KT, KN)
     D = size(KT)[1]

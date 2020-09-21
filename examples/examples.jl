@@ -30,20 +30,21 @@ end
 GRAPE_AD(test_x, rand(2, 10))
 
 
-prob_ADGRAPE = ClosedStateTransfer(
-    [sx, sy],
-    [0.0 * sz],
-    ρ1,
-    ρt,
-    1.0,
-    1 / 10,
-    10,
-    2,
-    1,
-    GRAPE_AD()
+prob = ClosedStateTransfer(
+    B = [sx, sy],
+    A = [0.0 * sz],
+    X_init = ρ1,
+    X_target = ρt,
+    duration = 1.0,
+    n_timeslices = 10,
+    n_controls = 2,
+    n_ensemble = 1,
+    norm2 = 1,
+    alg = GRAPE_AD(),
+    initial_guess = rand(2, 10)
 )
 
-sol = solve(prob_ADGRAPE)
+sol = solve(prob)
 
 prob_dCRAB = ClosedStateTransfer(
     [sx, sy],

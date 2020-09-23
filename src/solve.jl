@@ -21,7 +21,7 @@ end
 Generic interface, takes the alg choice out of the prob struct and then we can dispatch on it to the various _solve methods
 """
 function solve(prob)
-    _solve(prob, prob.alg, prob.inplace)
+    _solve(prob, prob.alg)
 end
 
 """
@@ -32,7 +32,7 @@ Concern below still valid!
 ClosedSystem using approximation gradient of GRAPE uses this function to solve.
     Currently this calls optim, the other algorithms do not... maybe we should change it so that the optimisation is actually done in the algorithms.jl file.
 """
-function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx, inplace::Val{true})
+function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx)
 
     # prepare some storage arrays that we will make use of throughout the computation
     U, L, gens, props, fom, gradient = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)

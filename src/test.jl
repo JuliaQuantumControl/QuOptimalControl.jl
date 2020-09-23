@@ -104,3 +104,31 @@ sGRAPE(A[2], B[1], o.minimizer, n_timeslices, duration, n_controls, gradient[1,:
 
 using QuOptimalControl
 visualise_pulse(o.minimizer, 2)
+
+
+struct test
+    a
+    inplace
+end
+
+
+f = test(10, false)
+t = test(0, true)
+
+function kss(p)
+    _kss(p, Val(p.inplace))
+end
+
+function _kss(p, inp::Val{true})
+    @show "hi im new hered"
+    @show p.a
+end
+
+function _kss(p, inp::Val{false})
+    @show "how do I work, doot"
+    @show p.a
+    @show inp
+end
+
+
+kss(f)

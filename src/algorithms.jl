@@ -46,54 +46,7 @@ end
 """
 Flexible GRAPE algorithm that can use any array type to solve GRAPE problems. This is best when your system is so large that StaticArrays cannot be used! The arrays given will be updated in place!
 """
-function GRAPE!(F, G, x, U, L, gens, props, fom, gradient, A, B, n_timeslices, n_ensemble, duration, n_controls, prob, evolve_store, weights)
-
-    dt = duration / n_timeslices
-    for k = 1:n_ensemble
-        U[1, k] = prob.X_init[k]
-        L[end, k] = prob.X_target[k]
-
-
-        # do we need to actually save the generators of the transforms or do we simply need the propagators?
-        pw_ham_save!(A[k], B[k], x, n_controls, n_timeslices, @view gens[:,k])
-        # @views props[:, k] .= ExponentialUtilities._exp!.(Gen[:,k] .* (-1.0im * dt))
-        @views props[:, k] .= exp.(gens[:, k] .* (-1.0im * dt))
-
-        # forward propagate
-        for t = 1:n_timeslices
-            evolve_func!(prob, t, k, U, L, props, gens, evolve_store, forward = true)
-        end
-        
-        # prob backwards in time
-        for t = reverse(1:n_timeslices)
-            evolve_func!(prob, t, k, U, L, props, gens, evolve_store, forward = false)
-        end
-        
-        t = n_timeslices # can be chosen arbitrarily
-        fom[k] = fom_func(prob, t, k, U, L, props, gens)
-
-        # we can optionally compute this actually
-        for c = 1:n_controls
-            for t = 1:n_timeslices
-                # might want to alter this to just pass the matrices that matter rather than everything
-                @views gradient[k, c, t] = grad_func!(prob, t, dt, k, B[k][c], U, L, props, gens, evolve_store)
-            end
-        end
-            
-    end
-
-    # then we average over everything
-    if G !== nothing
-        @views G .= sum(weights .* gradient, dims = 1)[1,:, :]
-    end
-
-    if F !== nothing
-        return sum(fom .* weights)
-    end
-
-end
-
-function GRAPE_testing!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
+function GRAPE!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
     dt = duration / n_timeslices
     U_k[1] .= X_init
     L_k[end] .= X_target

@@ -55,11 +55,11 @@ function GRAPE!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k,
     @views props[:] .= exp.(gens[:] * (-1.0im * dt))
 
     for t = 1:n_timeslices
-        evolve_func!(prob, t, 1, U_k, L_k, props, gens, evolve_store, forward = true)
+        evolve_func!(prob, t, U_k, L_k, props, gens, evolve_store, forward = true)
     end
 
     for t = reverse(1:n_timeslices)
-        evolve_func!(prob, t, 1, U_k, L_k, props, gens, evolve_store, forward = false)
+        evolve_func!(prob, t, U_k, L_k, props, gens, evolve_store, forward = false)
     end
 
     t = n_timeslices

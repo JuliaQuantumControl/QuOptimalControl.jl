@@ -147,24 +147,24 @@ end
 """
 In-place evolution functions 
 """
-function evolve_func!(prob::UnitarySynthesis, t, k, U, L, props, gens, store; forward = true)
+function evolve_func!(prob::UnitarySynthesis, t, U, L, props, gens, store; forward = true)
     if forward
-        @views mul!(U[t+1, k], props[t, k], U[t, k])
+        @views mul!(U[t+1], props[t], U[t])
     else
-        @views mul!(L[t, k], props[t, k]', L[t+1, k])
+        @views mul!(L[t], props[t]', L[t+1])
     end
 end
 
 """
 In-place evolution functions, I think these don't allocate at all
 """
-function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, k, U, L, props, gens, store; forward = true)
+function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, U, L, props, gens, store; forward = true)
     if forward
-        @views mul!(store, U[t, k], props[t, k]')
-        @views mul!(U[t+1, k], props[t, k], store)
+        @views mul!(store, U[t], props[t]')
+        @views mul!(U[t+1], props[t], store)
     else
-        @views mul!(store, L[t+1, k], props[t, k])
-        @views mul!(L[t, k], props[t, k]',  store)
+        @views mul!(store, L[t+1], props[t])
+        @views mul!(L[t], props[t]',  store)
     end
 end
 

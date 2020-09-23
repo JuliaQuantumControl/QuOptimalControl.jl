@@ -15,6 +15,7 @@ Structs here simply used for dispatch to the correct method
 @kwdef struct GRAPE_approx <: gradientBased 
     g_tol = 1e-6
 end
+
 struct GRAPE_AD <: gradientBased end
 
 @kwdef struct dCRAB_options <: gradientFree
@@ -54,7 +55,7 @@ function GRAPE!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k,
     L_k[end] .= X_target
 
     pw_ham_save!(A, B, u_c, n_controls, n_timeslices, @view gens[:])
-    @views props[:] .= exp.(gens[:] * (-1.0im * dt))
+    @views props[:] .= exp.(gens[:] .* (-1.0im * dt))
 
     for t = 1:n_timeslices
         evolve_func!(prob, t, U_k, L_k, props, gens, evolve_store, forward = true)

@@ -23,25 +23,13 @@ prob = ClosedStateTransfer(
     initial_guess = rand(2, 10)
 )
 
-sol = solve(prob_GRAPE)
-
-# u, l, g, p, f, gra = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
-
-# u[:,1][1] .= ρ1
-
-
-
-function test_x(x)
-    # real value return
-end
-GRAPE_AD(test_x, rand(2, 10))
-
+sol = solve(prob)
 
 prob = ClosedStateTransfer(
-    B = [sx, sy],
+    B = [[sx, sy]],
     A = [0.0 * sz],
-    X_init = ρ1,
-    X_target = ρt,
+    X_init = [ρ1],
+    X_target = [ρt],
     duration = 1.0,
     n_timeslices = 10,
     n_controls = 2,
@@ -54,16 +42,17 @@ prob = ClosedStateTransfer(
 sol = solve(prob)
 
 prob_dCRAB = ClosedStateTransfer(
-    [sx, sy],
-    [0.0 * sz],
-    ρ1,
-    ρt,
-    1.0,
-    1 / 10,
-    10,
-    2,
-    1,
-    dCRAB_type()
+    B = [[sx, sy]],
+    A = [0.0 * sz],
+    X_init = ρ1,
+    X_target = ρt,
+    duration = 1.0,
+    n_timeslices = 10,
+    n_controls = 2,
+    n_ensemble = 1,
+    norm2 = 1.0,
+    alg = dCRAB_options(),
+    initial_guess = rand(2,10)
 )
 
 

@@ -144,7 +144,7 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, initial_gues
 
     pulse_time = 0:dt:duration - dt
 
-    # functions for computing indices becaues I find them hard
+    # functions for computing indices because I find them hard
     first(j) = (j - 1) * n_coeff + 1
     second(j) = j * n_coeff
 

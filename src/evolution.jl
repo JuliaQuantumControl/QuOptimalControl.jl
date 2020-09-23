@@ -26,11 +26,11 @@ end
 Given a set of Hamiltonians (drift and control) compute the evolution, Zygote compatible
 lets dispatch to this properly sometime
 """
-function pw_evolve_T(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices)::T where T
+function pw_evolve_T(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
     x_arr = complex.(real.(x_arr)) # needed for Zygote to use complex numbers internally
     D = size(H₀)[1] # get dimension of the system
     K = n_pulses
-    U0 = T(I(D))
+    # U0 = T(I(D))
     for i = 1:timeslices
         # compute the propagator
         Htot = H₀ + sum(Hₓ_array .* x_arr[:, i])

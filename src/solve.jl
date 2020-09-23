@@ -65,9 +65,17 @@ Solve closed state transfer prob using ADGRAPE, this means that we need to use a
 """
 function _solve(prob::ClosedStateTransfer, alg::GRAPE_AD)
     
+    wts = ones(prob.n_ensemble)
+    D = size(prob.A[1])[1]
+    u0 = typeof(prob.A[1])(I(D))
+    
     function user_functional(x)
-        U = pw_evolve_T(prob.A[1], prob.B, x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
-        C2(prob.X_target, (U * prob.X_init * U'))
+        fom = 0.0
+        for k = 1:prob.n_ensemble
+            U = pw_evolve_T(prob.A[k], prob.B[k], x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, u0)
+            fom += C1(prob.X_target[k], (U * prob.X_init[k] * U')) * wts[k]
+        end
+        fom
     end
 
     init = prob.initial_guess
@@ -84,11 +92,16 @@ Here we define a functional for the user, since we can assume that this is the t
 function _solve(prob::ClosedStateTransfer, alg::dCRAB_options)
     # we define our own functional here for a closed system
 
+    wts = ones(prob.n_ensemble)
     function user_functional(x)
-        # we get an a 2D array of pulses
-        U = pw_evolve(prob.A[1], prob.B, x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
-        # U = reduce(*, U)
-        C1(prob.X_target, U * prob.X_init)
+        fom = 0.0
+        for k = 1:prob.n_ensemble
+            # we get an a 2D array of pulses
+            U = pw_evolve(prob.A[k], prob.B[k], x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
+            # U = reduce(*, U)
+            fom += C2(prob.X_target, U * prob.X_init) * wts[k]
+        end
+        fom
     end
 
     coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)

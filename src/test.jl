@@ -134,6 +134,20 @@ end
 kss(f)
 
 
+using StaticArrays
 
 
+s = @SVector zeros(3)
+
+typeof(s)
+
+function doot(x::SArray)
+    @show typeof(x)
+end
+
+function doot(x::Array)
+    @show typeof(x)
+end
+
+doot(Array(s))
 

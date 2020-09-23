@@ -39,12 +39,22 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
 
     wts = ones(prob.n_ensemble)
     evolve_store = similar(U[:,1][1])
-
-    test = (F, G, x) -> GRAPE!(F, G, x, U, L, gens, props, fom, gradient, prob.A, prob.B, prob.n_timeslices, prob.n_ensemble, prob.duration, prob.n_controls, prob, evolve_store, wts)
+    function to_optimise(F, G, x)
+        fom = 0.0
+        for k = 1:prob.n_ensemble
+            fom += GRAPE!(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], U[:,1][k], L[:,1][k], gens[:,k], props[:,k], prob.X_init[k], prob.X_target[k], evolve_store, prob) .* wts
+        end
+        if G !== nothing
+            @views G .= sum(gradient .* wts, dims = 1)[1, :,:]
+        end
+        if F !== nothing
+            return fom
+        end
+    end
 
     init = prob.initial_guess
 
-    res = Optim.optimize(Optim.only_fg!(test), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_trace = true))
+    res = Optim.optimize(Optim.only_fg!(to_optimise), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_trace = true))
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 
     return solres

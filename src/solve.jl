@@ -25,6 +25,15 @@ function solve(prob)
 end
 
 """
+For now we will do one level more of dispatch, not sure that is really the best option!
+
+Depending on the parameter inplace, which is set in the algorithm options
+"""
+function _solve(prob, alg::GRAPE_approx)
+    _solve(prob, alg, Val(alg.inplace))
+end
+
+"""
 This solve function should handle ClosedStateTransfer, UnitarySynthesis and an open system governed in Liouville space, since the bulk of the code remains the same and we dispatch based on prob type to the correct evolution algorithms (Khaneja et. al.).
 """
 function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx, inplace::Val{true})
@@ -55,6 +64,9 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
     return solres
 end
 
+"""
+Solve function for use with inplace=false, StaticArray problems!
+"""
 function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx, inplace::Val{false})
 
     # prepare some storage arrays that we will make use of throughout the computation
@@ -84,19 +96,6 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
 
     return solres
 end
-
-
-
-"""
-For now we will do one leve more of dispatch, not sure that is really the best option!
-
-Depending on the parameter inplace, which is set in the algorithm options
-"""
-
-function _solve(prob, alg::GRAPE_approx)
-    _solve(prob, alg, Val(alg.inplace))
-end
-
 
 """
 Solve closed state transfer prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!

@@ -2,11 +2,7 @@
 
 Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 
-**Current status: very WIP!**
-
 **If you'd like to help, please get in touch with me! You can reach me @nv_alastair on Twitter or I guess by opening an issue on here...?**
-
-**Need to add citations, Shai Machnes, Ville Bergholm, Steffen Glaser, Thomas Schulte-Herbruggen et al.**
 
 ## Usage
 
@@ -26,28 +22,28 @@ using QuantumInformation # provides Pauli matrices for example
 ρt = ψt' * ψt
 
 prob_GRAPE = ClosedStateTransfer(
-    H_ctrl = [sx, sy],
-    H_drift = [0.0 * sz],
+    B = [sx, sy],
+    A = [0.0 * sz],
     X_init = ρ1,
     X_target = ρt,
     duration = 1.0,
-    timestep = 1 / 10,
     n_timeslices = 10,
-    n_pulses = 2,
+    n_controls = 2,
     n_ensemble = 1,
     norm2 = 1.0,
-    GRAPE_approx()
+    alg = GRAPE_approx(),
+    initial_guess = rand(2, 10)
 )
 
 sol = solve(prob_GRAPE)
 ```
 
-And the approximate GRAPE algorithm will solve the problem automatically, there's no need to define anything else!
+And in this case our chosen algorithm, the approximate GRAPE algorithm, will solve the problem automatically, there's no need to define anything else!
 
 Now we can visualise the output pulse:
 
 ```julia
-visualise_pulse(sol.optimised_pulses, duration = 1.0)
+visualise_pulse(sol.optimised_pulses, duration = prob.duration)
 ```
 
 ![Bar plot of pulse amplitudes](https://raw.githubusercontent.com/alastair-marshall/QuOptimalControl.jl/master/assets/pulsevis.png "Pulse output")
@@ -66,10 +62,9 @@ visualise_pulse(sol.optimised_pulses, duration = 1.0)
 
 Where A is the "drift" term and B is the "control" term and u(t) are time dependent control amplitudes that allow us to modify the state of the system.
 
-
 We utilise Julia's multiple dispatch (where the Julia compiler decides which code to run based on the types of the problem) to keep the code clean. This means that when the solve function is called it passes over to a specific implementation of the algorithm for the problem in hand.
 
-Using GRAPE as an example, there is a lot of similarity between different problem types when calculating the propagators but the gradient, figure of merit and evolution functions are different. We use multiple dispatch to choose the correct set of functions (this doesn't incur any time cost because the types are known). 
+**Need to add citations, Shai Machnes, Ville Bergholm, Steffen Glaser, Thomas Schulte-Herbruggen et al.**
 
 
 ## Functionality

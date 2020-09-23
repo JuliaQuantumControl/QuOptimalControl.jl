@@ -42,7 +42,7 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
     function to_optimise(F, G, x)
         fom = 0.0
         for k = 1:prob.n_ensemble
-            fom += GRAPE!(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], U[:,1][k], L[:,1][k], gens[:,k], props[:,k], prob.X_init[k], prob.X_target[k], evolve_store, prob) .* wts
+            fom += @views GRAPE!(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], U[:,k], L[:,k], gens[:,k], props[:,k], prob.X_init[k], prob.X_target[k], evolve_store, prob) * wts[k]
         end
         if G !== nothing
             @views G .= sum(gradient .* wts, dims = 1)[1, :,:]

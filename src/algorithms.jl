@@ -12,7 +12,9 @@ import Base.@kwdef
 """
 Structs here simply used for dispatch to the correct method
 """
-struct GRAPE_approx <: gradientBased end
+@kwdef struct GRAPE_approx <: gradientBased 
+    g_tol = 1e-6
+end
 struct GRAPE_AD <: gradientBased end
 
 @kwdef struct dCRAB_options <: gradientFree

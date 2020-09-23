@@ -54,7 +54,7 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
 
     init = prob.initial_guess
 
-    res = Optim.optimize(Optim.only_fg!(to_optimise), init, Optim.LBFGS(), Optim.Options(show_trace = true, allow_f_increases = false, store_trace = true))
+    res = Optim.optimize(Optim.only_fg!(to_optimise), init, Optim.LBFGS(), Optim.Options(g_tol = prob.alg.g_tol, show_trace = true, allow_f_increases = false, store_trace = true))
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 
     return solres

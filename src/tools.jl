@@ -84,6 +84,15 @@ function pulse_to_file(pulse, file_path)
     end 
 end
 
+function pulse_to_file(pulse, file_path, duration)
+    # can maybe check the shape and reshape so that its always time going down the file
+    N = length(pulse)
+    time_array = collect(range(0, duration, length = N))
+    open(file_path, "w") do io
+        writedlm(io, [time_array pulse'])
+    end 
+end
+
 
 """
 Compute the eigen decomposition of a generator matrix G. Based on work by both Shai Machnes and Ville Bergholm.

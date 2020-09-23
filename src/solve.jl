@@ -27,7 +27,7 @@ end
 """
 This solve function should handle ClosedStateTransfer, UnitarySynthesis and an open system governed in Liouville space, since the bulk of the code remains the same and we dispatch based on prob type to the correct evolution algorithms (Khaneja et. al.).
 """
-function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx)
+function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx, inplace::Val{true})
 
     # prepare some storage arrays that we will make use of throughout the computation
     U, L, gens, props, fom, gradient = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
@@ -54,6 +54,49 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
 
     return solres
 end
+
+function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoherenceTransfer}, alg::GRAPE_approx, inplace::Val{false})
+
+    # prepare some storage arrays that we will make use of throughout the computation
+    Ut = Vector{typeof(prob.A[1])}(undef, prob.n_timeslices + 1)
+    Lt = Vector{typeof(prob.A[1])}(undef, prob.n_timeslices + 1)
+
+
+    wts = ones(prob.n_ensemble)
+
+    function to_optimise(F, G, x)
+        fom = 0.0
+        for k = 1:prob.n_ensemble
+            fom += @views sGRAPE(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], Uk, Lk, prob.X_init[k], prob.X_target[k], prob) * wts[k]
+        end
+        if G !== nothing
+            @views G .= sum(gradient .* wts, dims = 1)[1, :,:]
+        end
+        if F !== nothing
+            return fom
+        end
+    end
+
+    init = prob.initial_guess
+
+    res = Optim.optimize(Optim.only_fg!(to_optimise), init, Optim.LBFGS(), Optim.Options(g_tol = prob.alg.g_tol, show_trace = true, allow_f_increases = false, store_trace = true))
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
+
+    return solres
+end
+
+
+
+"""
+For now we will do one leve more of dispatch, not sure that is really the best option!
+
+Depending on the parameter inplace, which is set in the algorithm options
+"""
+
+function _solve(prob, alg::GRAPE_approx)
+    _solve(prob, alg, Val(alg.inplace))
+end
+
 
 """
 Solve closed state transfer prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!

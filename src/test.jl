@@ -105,12 +105,40 @@ sGRAPE(A[2], B[1], o.minimizer, n_timeslices, duration, n_controls, gradient[1,:
 using QuOptimalControl
 visualise_pulse(o.minimizer, 2)
 
-
-struct test
-    a
-    inplace
+struct dootdoot2
+inplace
 end
 
+struct test2
+    a
+end
+
+
+function first(x)
+    _first(x, x.a)
+end
+
+function _first(x, a::dootdoot2)
+    _first(x, a, Val(a.inplace))
+end
+
+function _first(x, a, inp::Val{true})
+    @show "inplace true"
+end
+
+
+function _first(x, a, inp::Val{false})
+    @show "inplace false"
+end
+
+
+a = dootdoot2(true)
+b = dootdoot2(false)
+
+inp1 = test2(a)
+inp2 = test2(b)
+
+first(inp2)
 
 f = test(10, false)
 t = test(0, true)

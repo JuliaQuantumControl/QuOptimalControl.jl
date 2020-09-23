@@ -14,6 +14,7 @@ Structs here simply used for dispatch to the correct method
 """
 @kwdef struct GRAPE_approx <: gradientBased 
     g_tol = 1e-6
+    inplace = true # if you want to use StaticArrays set this to false!
 end
 
 struct GRAPE_AD <: gradientBased end

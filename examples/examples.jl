@@ -58,20 +58,7 @@ prob_dCRAB = ClosedStateTransfer(
 
 sol = solve(prob_dCRAB)
 
-using Plots
-bar(sol.minimizer[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")
-bar!(sol.minimizer[2, :], label = "2")
-
-
-sol = solve(prob_dCRAB)
-
-# the users functional should take a drive as an input and return the infidelity
-function user_functional(x)
-    # we get an a 2D array of pulses
-    U = pw_evolve(0 * sz, [π * sx, π * sy], x, 2, dt, timeslices)
-    # U = reduce(*, U)
-    C1(ρt, (U * ρ1 * U'))
-end
+visualise_pulse(sol.optimised_pulses, duration = prob.duration)
 
 """
 Dummy function that simply saves a random number in the result.txt file
@@ -96,16 +83,3 @@ function user_functional_expt(x)
     # then read in the result
     infid = readdlm("result.txt")[1]
 end
-
-dt = 1 / 10
-duration  = 1
-timeslices = 10
-n_freq = 1
-n_coeff = 2
-coeffs, pulses = dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, user_functional_expt)
-# starting over from the a fresh repl
-
-controls = vcat(pulses...)
-using Plots
-bar(controls[1, :], ylabel = "Control amplitude", xlabel = "Index", label = "1")
-bar!(controls[2, :], label = "2")

@@ -4,6 +4,35 @@
 # if your problem is small enough you should use static arrays, these will have in-place = false
 
 
+# thinking about how the penalty functional should work
+
+myC1 = x -> C1(x, #whatever else)
+myC2 = x -> C2(x, ...)
+
+
+penalty = PenaltyFunctionals([1.0, 2.0, 3.0], [myC1, myC2, myC3])
+prob = ClosedStateTransfer(# control stuff etc, penalty)
+
+# then in the code we can evaluate penalty functional 
+# when we return the FoM we can evaluate sum(weights .* functions.(x))
+# and we can also evaluate the gradient using AD (probably)
+
+
+
+
+
+
+
+
+
+################################################################
+
+
+
+
+
+################################################################
+
 using StaticArrays
 using QuantumOpticsBase
 b = SpinBasis(1//2)

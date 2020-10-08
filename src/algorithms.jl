@@ -104,17 +104,15 @@ function sGRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k,
     for t = reverse(1:n_timeslices)
         L_k[t] = evolve_func(prob, t, U_k, L_k, props, gens, forward = false)
     end
-
-    t = n_timeslices
-
     # update the gradient array
     for c = 1:n_controls
         for t = 1:n_timeslices
-            @views gradient[c, t] = grad_func(prob, t, dt, B[c], U_k, L_k, props, gens)
+            gradient[c, t] = grad_func(prob, t, dt, B[c], U_k, L_k, props, gens)
 
         end
     end
 
+    t = n_timeslices
     return fom_func(prob, t, U_k, L_k, props, gens)
 end
 

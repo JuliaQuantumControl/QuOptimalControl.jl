@@ -1,5 +1,3 @@
-
-
 using QuOptimalControl
 using Test
 
@@ -9,11 +7,11 @@ using Test
     # test GRAPE initially
     # closed state trnasfer problem initially
 
-    ρinit = [1.0 0.0]' * [1.0 0.0+0im]
+    ρinit = [1.0  .0]' * [1.0 0.0+0im]
     ρfin = [0.0 1.0]' * [0.0 1.0+0im]
     
     prob = ClosedStateTransfer(
-        B = [σx, σy],
+        B = [[σx, σy]],
         A = [σz],
         X_init = [ρinit],
         X_target = [ρfin],

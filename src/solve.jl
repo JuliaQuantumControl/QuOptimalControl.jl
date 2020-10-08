@@ -79,7 +79,9 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
     function to_optimise(F, G, x)
         fom = 0.0
         for k = 1:prob.n_ensemble
-            fom += @views sGRAPE(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], Ut, Lt, prob.X_init[k], prob.X_target[k], prob) * wts[k]
+            # eh 
+            grad = @views gradient[k, :, :]
+            fom += sGRAPE(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, grad, Ut, Lt, prob.X_init[k], prob.X_target[k], prob) * wts[k]
         end
         if G !== nothing
             @views G .= sum(gradient .* wts, dims = 1)[1, :,:]

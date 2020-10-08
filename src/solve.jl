@@ -72,14 +72,14 @@ function _solve(prob::Union{ClosedStateTransfer,UnitarySynthesis,OpenSystemCoher
     # prepare some storage arrays that we will make use of throughout the computation
     Ut = Vector{typeof(prob.A[1])}(undef, prob.n_timeslices + 1)
     Lt = Vector{typeof(prob.A[1])}(undef, prob.n_timeslices + 1)
-
+    gradient = zeros(prob.n_ensemble, prob.n_controls, prob.n_timeslices)
 
     wts = ones(prob.n_ensemble)
 
     function to_optimise(F, G, x)
         fom = 0.0
         for k = 1:prob.n_ensemble
-            fom += @views sGRAPE(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], Uk, Lk, prob.X_init[k], prob.X_target[k], prob) * wts[k]
+            fom += @views sGRAPE(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], Ut, Lt, prob.X_init[k], prob.X_target[k], prob) * wts[k]
         end
         if G !== nothing
             @views G .= sum(gradient .* wts, dims = 1)[1, :,:]

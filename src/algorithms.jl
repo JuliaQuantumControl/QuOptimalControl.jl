@@ -115,7 +115,7 @@ function sGRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k,
         end
     end
 
-    return fom_func(prob, t, U, L, props, gens)
+    return fom_func(prob, t, U_k, L_k, props, gens)
 end
 
 """

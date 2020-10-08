@@ -309,3 +309,14 @@ for i = 1:N
 end
 
 # come back to this later
+
+
+
+function test(x)
+    for i = 1:length(x)
+        x[i] = i
+    end
+end
+
+z = zeros(2, 6)
+test(@views z[2, :])

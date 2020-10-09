@@ -7,7 +7,7 @@ First order in dt gradient from Khaneja paper for unitary synthesis
 """
 function grad_func!(prob::UnitarySynthesis, t, dt, B, U, L, props, gens, store)::Float64
     @views mul!(store, U[t]', L[t])
-    @views -2.0 * real((1.0im * dt) .* tr(L[t]' * B * U[t]) * tr(store))
+    @views 2.0 * real((1.0im * dt) .* tr(L[t]' * B * U[t]) * tr(store))
 end
 
 # function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens, store)::Float64
@@ -16,17 +16,17 @@ end
 
 function grad_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens, store)::Float64
     @views mul!(store, L[t]', commutator(B, U[t]))
-    -1.0 * real(tr((1.0im * dt) .* store))
+    real(tr((1.0im * dt) .* store))
 end
 
 function grad_func(prob::UnitarySynthesis, t, dt, B, U, L, props, gens)
-    -2.0 * real((-1.0im * dt)* 
+    2.0 * real((-1.0im * dt)* 
         tr(L[t]' * B * U[t]) * tr(U[t]' * L[t]) 
     )
 end
 
 function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens)
-    -1.0 * real(tr(
+    real(tr(
         (1.0im * dt) .* (L[t]' * commutator(B, U[t]))
     ))
 end

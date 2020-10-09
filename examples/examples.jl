@@ -19,7 +19,7 @@ prob = ClosedStateTransfer(
     n_controls = 2,
     n_ensemble = 1,
     norm2 = 1.0,
-    alg = GRAPE_approx(),
+    alg = GRAPE_approx(inplace = true),
     initial_guess = rand(2, 10)
 )
 

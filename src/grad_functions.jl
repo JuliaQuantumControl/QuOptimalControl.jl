@@ -2,8 +2,6 @@
 Grad functions for GRAPE
 """
 
-# include("./problems.jl")
-
 """
 First order in dt gradient from Khaneja paper for unitary synthesis
 """
@@ -18,8 +16,7 @@ end
 
 function grad_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens, store)::Float64
     @views mul!(store, L[t]', commutator(B, U[t]))
-
-    real(tr((1.0im * dt) .* store))
+    -1.0 * real(tr((1.0im * dt) .* store))
 end
 
 function grad_func(prob::UnitarySynthesis, t, dt, B, U, L, props, gens)
@@ -29,11 +26,9 @@ function grad_func(prob::UnitarySynthesis, t, dt, B, U, L, props, gens)
 end
 
 function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens)
-    real(
-        tr(
-            (1.0im * dt) .* (L[t]' * commutator(B, U[t]))
-        )
-    )
+    -1.0 * real(tr(
+        (1.0im * dt) .* (L[t]' * commutator(B, U[t]))
+    ))
 end
 
 

@@ -29,13 +29,13 @@ end
 Simple. Use Zygote to solve all of our problems
 Compute the gradient of a functional f(x) wrt. x
 """
-function ADGRAPE(functional, x; g_tol = 1e-6, iters=1000)
+function ADGRAPE(functional, x; f_tol = 1e-3, g_tol = 1e-6, iters=1000)
 
     function grad_functional!(G, x)
         G .= Zygote.gradient(functional, x)[1]
     end
     
-    res = optimize(functional, grad_functional!, x, LBFGS(), Optim.Options(g_tol = g_tol, show_trace = true, store_trace = true, iterations=iters))
+    res = optimize(functional, grad_functional!, x, LBFGS(), Optim.Options(f_tol = f_tol, g_tol = g_tol, show_trace = true, store_trace = true, iterations=iters))
 
 end
 

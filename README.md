@@ -8,9 +8,7 @@ Quantum optimal control essentially tries to provide numerically optimised solut
 
 Trying to mimic the interface that DifferentialEquations.jl uses we offer several problem definitions. Problems define the dynamics of the quantum system.
 
-Included in the problem definition (for now) are some algorithm options to tune the algorithms. 
-
-Once a problem has been constructed and an algorithm tuned we can simply solve the problem and through the wonders of multiple dispatch the code should just work!
+Once a problem has been constructed we can use any of the available algorithms (ADGRAPE, GRAPE and dCRAB) to solve the problem. Using multiple dispatch the solver should then get to work.
 
 ```julia
 using QuantumInformation # provides Pauli matrices for example
@@ -24,18 +22,16 @@ using QuantumInformation # provides Pauli matrices for example
 prob_GRAPE = ClosedStateTransfer(
     B = [sx, sy],
     A = [0.0 * sz],
-    X_init = ρ1,
-    X_target = ρt,
+    X_init = [ρ1],
+    X_target = [ρt],
     duration = 1.0,
     n_timeslices = 10,
     n_controls = 2,
     n_ensemble = 1,
-    norm2 = 1.0,
-    alg = GRAPE_approx(),
     initial_guess = rand(2, 10)
 )
 
-sol = solve(prob_GRAPE)
+sol = GRAPE(prob_GRAPE, inplace = false)
 ```
 
 And in this case our chosen algorithm, the approximate GRAPE algorithm, will solve the problem automatically, there's no need to define anything else!
@@ -48,11 +44,15 @@ visualise_pulse(sol.optimised_pulses, duration = prob.duration)
 
 ![Bar plot of pulse amplitudes](https://raw.githubusercontent.com/alastair-marshall/QuOptimalControl.jl/master/assets/pulsevis.png "Pulse output")
 
+### Algorithms
+
+For the defined problem types within the package (ClosedStateTransfer, UnitarySynthesis, OpenSystemCoherenceTransfer, ExperimentInterface) there are several predefined solver methods to make it easy to construct and solve common problems. All of the implemented algorithms are also available if the predefined solver methods aren't suitable for the problem type. 
 
 
-### How does it work?
 
-#### What problem are we trying to solve?
+## How does it work?
+
+### What problem are we trying to solve?
 
 
 ![\begin{align*}
@@ -61,8 +61,6 @@ visualise_pulse(sol.optimised_pulses, duration = prob.duration)
 ](https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+%5Cbegin%7Balign%2A%7D%0A%5Cdot%7BX%28t%29%7D+%3D+%28A+%2B+B+u_c%28t%29%29X%28t%29%0A%5Cend%7Balign%2A%7D%0A)
 
 Where A is the "drift" term and B is the "control" term and u(t) are time dependent control amplitudes that allow us to modify the state of the system.
-
-We utilise Julia's multiple dispatch (where the Julia compiler decides which code to run based on the types of the problem) to keep the code clean. This means that when the solve function is called it passes over to a specific implementation of the algorithm for the problem in hand.
 
 **Need to add citations, Shai Machnes, Ville Bergholm, Steffen Glaser, Thomas Schulte-Herbruggen et al.**
 
@@ -83,7 +81,7 @@ We utilise Julia's multiple dispatch (where the Julia compiler decides which cod
 Julia is the perfect language to develop these tools in because:
 1. it's easy to express mathematics in
 2. it's really fast and thats what we care about
-3. multiple dispatch makes it easy to write flexile code
+3. multiple dispatch makes it easy to write flexible code
 4. good python interop (package coming)
 5. automatic differentiation tooling is great and improving
 

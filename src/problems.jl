@@ -17,25 +17,8 @@ Description of the dynamics of a closed state transfer problem. This also applie
     n_timeslices # slices
     n_controls # number of pulses
     n_ensemble # number of members for ensemble optimisation
-    norm2 # normalisation constant
-    alg # algorithm 
     initial_guess # guess at controls
 end
-
-# do we need a set of inner constructors so that we can compute the timestep rather than specify it?
-# function ClosedStateTransfer(; B, A, X_init, X_target, duration, n_timeslices, n_controls, n_ensemble, norm2, alg, initial_guess)
-#     # how do we deal with these if we start using callable functions
-#     @assert size(A)[1] == n_ensemble
-#     @assert size(B)[1] == n_controls
-#     new(B, A, X_init, X_target, duration, duration/n_timeslices, n_timeslices, n_controls, n_ensemble, norm2, alg, initial_guess)
-# end
-
-# function ClosedStateTransfer(; B, A, X_init, X_target, duration, n_timeslices, n_controls, n_ensemble, norm2)
-#     # how do we deal with these if we start using callable functions
-#     @assert size(A)[1] == n_ensemble
-#     @assert size(B)[1] == n_controls
-#     new(B, A, X_init, X_target, duration, duration/n_timeslices, n_timeslices, n_controls, n_ensemble, norm2, GRAPE_approx(), rand(n_controls, n_timeslices).*0.001)
-# end
 
 
 """
@@ -50,8 +33,6 @@ Description of the dynamics of a unitary synthesis problem. Although this contai
     n_timeslices # slices
     n_controls # number of pulses
     n_ensemble # number of members for ensemble optimisation
-    norm2 # normalisation constant
-    alg # algorithm 
     initial_guess # guess at controls
 end
 
@@ -69,8 +50,6 @@ Following the Khaneja and Glaser paper provided we can use the same gradient and
     n_timeslices # slices
     n_controls # number of pulses
     n_ensemble # number of members for ensemble optimisation
-    norm2 # normalisation constant
-    alg # algorithm 
     initial_guess # guess at controls
 end
 
@@ -86,5 +65,4 @@ Working with an experiment
     pulse_path
     infidelity_path
     timeout
-    alg
 end

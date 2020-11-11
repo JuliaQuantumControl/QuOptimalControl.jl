@@ -25,20 +25,21 @@ struct GRAPE_AD <: gradientBased end
 Simple. Use Zygote to solve all of our problems
 Compute the gradient of a functional f(x) wrt. x
 """
-function ADGRAPE(functional, x; f_tol = 1e-3, g_tol = 1e-6, iters=1000)
+#  f_tol = 1e-3, g_tol = 1e-6, iters=1000
+function _ADGRAPE(functional, x; optim_options = ())
 
     function grad_functional!(G, x)
         G .= Zygote.gradient(functional, x)[1]
     end
     
-    res = optimize(functional, grad_functional!, x, LBFGS(), Optim.Options(f_tol = f_tol, g_tol = g_tol, show_trace = true, store_trace = true, iterations=iters))
+    res = optimize(functional, grad_functional!, x, LBFGS(), optim_options)
 
 end
 
 """
 Flexible GRAPE algorithm that can use any array type to solve GRAPE problems. This is best when your system is so large that StaticArrays cannot be used! The arrays given will be updated in place!
 """
-function GRAPE!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
+function _GRAPE!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
     dt = duration / n_timeslices
     U_k[1] .= X_init
     L_k[end] .= X_target
@@ -71,7 +72,7 @@ Static GRAPE
 
 Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
 """
-function sGRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, X_init, X_target, prob) where T
+function _sGRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, X_init, X_target, prob) where T
     
     dt = duration / n_timeslices
     # arrays that hold static arrays?

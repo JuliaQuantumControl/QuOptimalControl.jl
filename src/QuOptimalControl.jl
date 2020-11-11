@@ -6,6 +6,8 @@ include("cost_functions.jl")
 include("tools.jl")
 include("evolution.jl")
 include("algorithms.jl")
+include("dCRAB.jl")
+include("GRAPE.jl")
 include("solve.jl")
 include("visualisation.jl")
 

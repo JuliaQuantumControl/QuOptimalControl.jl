@@ -1,7 +1,6 @@
 module QuOptimalControl
 
 include("problems.jl")
-include("grad_functions.jl")
 include("cost_functions.jl")
 include("tools.jl")
 include("evolution.jl")

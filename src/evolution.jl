@@ -33,7 +33,10 @@ function pw_evolve_T(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_p
     # U0 = T(I(D))
     for i = 1:timeslices
         # compute the propagator
-        Htot = H₀ + sum(Hₓ_array .* x_arr[:, i])
+        Htot = H₀
+        for j = 1:k
+            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
         U0 = exp(-1.0im * timestep * Htot) * U0
     end
     U0

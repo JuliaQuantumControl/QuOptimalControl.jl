@@ -19,7 +19,7 @@ end
 
 # how about instead of that we give some definitions based on algorithm directly
 
-function GRAPE(prob::Union{ClosedSystem,OpenSystem}; inplace = true, optim_options=())
+function GRAPE(prob::Union{ClosedSystem,OpenSystem}; inplace = true, optim_options=Optim.Options())
     if inplace
         GRAPE!(prob, optim_options)
     else
@@ -95,7 +95,7 @@ end
 """
 Solve closed state transfer prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
-function ADGRAPE(prob::ClosedStateTransfer; optim_options = ())
+function ADGRAPE(prob::ClosedStateTransfer; optim_options = Optim.Options())
     wts = ones(prob.n_ensemble)
     D = size(prob.A[1])[1]
     u0 = typeof(prob.A[1])(I(D))
@@ -118,7 +118,7 @@ end
 """
 Solve a unitary synthesis prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
-function ADGRAPE(prob::UnitarySynthesis; optim_options = ())
+function ADGRAPE(prob::UnitarySynthesis; optim_options = Optim.Options())
     wts = ones(prob.n_ensemble)
     u0 = typeof(prob.A[1])(I(D))
 

@@ -23,31 +23,33 @@ end
 """
 Flexible GRAPE algorithm that can use any array type to solve GRAPE problems. This is best when your system is so large that StaticArrays cannot be used! The arrays given will be updated in place!
 """
-function _GRAPE!(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, gens, props, X_init, X_target, evolve_store, prob) where T
+function _GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem) where T
+    
     dt = duration / n_timeslices
-    U_k[1] .= X_init
-    L_k[end] .= X_target
+    
+    fwd_state_store[1] .= X_init
+    bwd_costate_store[end] .= X_target
 
-    pw_ham_save!(A, B, u_c, n_controls, n_timeslices, @view gens[:])
-    @views props[:] .= exp.(gens[:] .* (-1.0im * dt))
+    pw_ham_save!(A, B, control_array, n_controls, n_timeslices, @view generators[:])
+    @views propagators[:] .= exp.(generators[:] .* (-1.0im * dt))
 
     for t = 1:n_timeslices
-        evolve_func!(prob, t, U_k, L_k, props, gens, evolve_store, forward = true)
+        evolve_func!(problem, t, fwd_state_store, bwd_costate_store, propagators, generators, evolve_store, forward = true)
     end
 
     for t = reverse(1:n_timeslices)
-        evolve_func!(prob, t, U_k, L_k, props, gens, evolve_store, forward = false)
+        evolve_func!(problem, t, fwd_state_store, bwd_costate_store, propagators, generators, evolve_store, forward = false)
     end
 
     t = n_timeslices
     
     for c = 1:n_controls
         for t = 1:n_timeslices
-            @views gradient[c, t] = grad_func!(prob, t, dt, B[c], U_k, L_k, props, gens, evolve_store)
+            @views gradient[c, t] = grad_func!(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, generators, evolve_store)
         end
     end
 
-    return fom_func(prob, t, U_k, L_k, props, gens)
+    return fom_func(problem, t, fwd_state_store, bwd_costate_store, propagators, generators)
 
 end
 
@@ -56,37 +58,37 @@ Static GRAPE
 
 Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
 """
-function _sGRAPE(A::T, B, u_c, n_timeslices, duration, n_controls, gradient, U_k, L_k, X_init, X_target, prob) where T
+function _sGRAPE(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, X_init, X_target, problem) where T
     
     dt = duration / n_timeslices
     # arrays that hold static arrays?
-    U_k[1] = X_init
-    L_k[end] = X_target
+    fwd_state_store[1] = X_init
+    bwd_costate_store[end] = X_target
 
 
     # now we want to compute the generators 
-    gens = pw_ham_save(A, B, u_c, n_controls,n_timeslices)
-    props = exp.(gens .* (-1.0im * dt))
+    generators = pw_ham_save(A, B, control_array, n_controls,n_timeslices)
+    propagators = exp.(generators .* (-1.0im * dt))
 
 
     # forward evolution of states
     for t = 1:n_timeslices
-        U_k[t+1] = evolve_func(prob, t, U_k, L_k, props, gens, forward = true)
+        fwd_state_store[t+1] = evolve_func(problem, t, fwd_state_store, bwd_costate_store, propagators, generators, forward = true)
     end
     # backward evolution of costates
     for t = reverse(1:n_timeslices)
-        L_k[t] = evolve_func(prob, t, U_k, L_k, props, gens, forward = false)
+        bwd_costate_store[t] = evolve_func(problem, t, fwd_state_store, bwd_costate_store, propagators, generators, forward = false)
     end
     # update the gradient array
     for c = 1:n_controls
         for t = 1:n_timeslices
-            gradient[c, t] = grad_func(prob, t, dt, B[c], U_k, L_k, props, gens)
+            gradient[c, t] = grad_func(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, generators)
 
         end
     end
 
     t = n_timeslices
-    return fom_func(prob, t, U_k, L_k, props, gens)
+    return fom_func(problem, t, fwd_state_store, bwd_costate_store, propagators, generators)
 end
 
 
@@ -99,22 +101,22 @@ Evolution functions for various GRAPE tasks
 """
 Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
 """
-function evolve_func(prob::UnitarySynthesis, t, U, L, props, gens; forward = true)
+function evolve_func(prob::UnitarySynthesis, t, state, costate, propagator, gens; forward = true)
     if forward
-        props[t] * U[t]
+        propagator[t] * state[t]
     else
-        props[t]' * L[t + 1]
+        propagator[t]' * costate[t + 1]
     end
 end
 
 """
 Evolution function for use with density matrices
 """
-function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, U, L, props, gens ;forward = true)
+function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, state, L, propagator, gens ;forward = true)
     if forward
-        props[t] * U[t] * props[t]'
+        propagator[t] * state[t] * propagator[t]'
     else
-        props[t]' * L[t + 1] * props[t]
+        propagator[t]' * costate[t + 1] * propagator[t]
     end
 end
 
@@ -123,24 +125,24 @@ end
 """
 In-place evolution functions 
 """
-function evolve_func!(prob::UnitarySynthesis, t, U, L, props, gens, store; forward = true)
+function evolve_func!(prob::UnitarySynthesis, t, state, costate, propagator, gens, store; forward = true)
     if forward
-        @views mul!(U[t+1], props[t], U[t])
+        @views mul!(state[t+1], propagator[t], state[t])
     else
-        @views mul!(L[t], props[t]', L[t+1])
+        @views mul!(costate[t], propagator[t]', costate[t+1])
     end
 end
 
 """
 In-place evolution functions, I think these don't allocate at all
 """
-function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, U, L, props, gens, store; forward = true)
+function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, state, costate, propagator, gens, store; forward = true)
     if forward
-        @views mul!(store, U[t], props[t]')
-        @views mul!(U[t+1], props[t], store)
+        @views mul!(store, state[t], propagator[t]')
+        @views mul!(state[t+1], propagator[t], store)
     else
-        @views mul!(store, L[t+1], props[t])
-        @views mul!(L[t], props[t]',  store)
+        @views mul!(store, costate[t+1], propagator[t])
+        @views mul!(costate[t], propagator[t]',  store)
     end
 end
 
@@ -152,25 +154,25 @@ Grad functions for GRAPE
 """
 First order in dt gradient from Khaneja paper for unitary synthesis
 """
-function grad_func!(prob::UnitarySynthesis, t, dt, B, U, L, props, gens, store)::Float64
-    @views mul!(store, U[t]', L[t])
-    @views 2.0 * real((1.0im * dt) .* tr(L[t]' * B * U[t]) * tr(store))
+function grad_func!(prob::UnitarySynthesis, t, dt, B, state, costate, props, gens, store)::Float64
+    @views mul!(store, state[t]', costate[t])
+    @views 2.0 * real((1.0im * dt) .* tr(costate[t]' * B * state[t]) * tr(store))
 end
 
-function grad_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens, store)::Float64
-    @views mul!(store, L[t]', commutator(B, U[t]))
+function grad_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, state, costate, props, gens, store)::Float64
+    @views mul!(store, costate[t]', commutator(B, state[t]))
     real(tr((1.0im * dt) .* store))
 end
 
-function grad_func(prob::UnitarySynthesis, t, dt, B, U, L, props, gens)
+function grad_func(prob::UnitarySynthesis, t, dt, B, state, costate, props, gens)
     2.0 * real((-1.0im * dt)* 
-        tr(L[t]' * B * U[t]) * tr(U[t]' * L[t]) 
+        tr(costate[t]' * B * state[t]) * tr(state[t]' * costate[t]) 
     )
 end
 
-function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens)
+function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, state, costate, props, gens)
     real(tr(
-        (1.0im * dt) .* (L[t]' * commutator(B, U[t]))
+        (1.0im * dt) .* (costate[t]' * commutator(B, state[t]))
     ))
 end
 

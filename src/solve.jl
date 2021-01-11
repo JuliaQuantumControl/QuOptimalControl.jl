@@ -150,16 +150,17 @@ function ensemble_sGRAPE(ensemble_problem, optim_options)
 
     function _to_optim!(F, G, x)
         fom = 0.0
-        for k = 1:n_ensemble
-            grad = @views gradient[k, :, :]
+            for k = 1:n_ensemble
+                grad = @views gradient[k, :, :]
+                
+                fom += _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem) * weights[k]
             
-            fom += _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem) * weights[k]
-        
-        if G !== nothing
-            @views G .= sum(grad .* weights, dims = 1)[1,:,:]
-        end
-        if F !== nothing
-            return fom
+            if G !== nothing
+                @views G .= sum(grad .* weights, dims = 1)[1,:,:]
+            end
+            if F !== nothing
+                return fom
+            end
         end
     end
 

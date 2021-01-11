@@ -112,7 +112,7 @@ end
 """
 Evolution function for use with density matrices
 """
-function evolve_func(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}, t, state, L, propagator, gens ;forward = true)
+function evolve_func(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}, t, state, costate, propagator, gens ;forward = true)
     if forward
         propagator[t] * state[t] * propagator[t]'
     else

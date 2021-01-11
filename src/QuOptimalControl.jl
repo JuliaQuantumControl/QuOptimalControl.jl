@@ -3,7 +3,7 @@ module QuOptimalControl
 include("problems.jl")
 include("cost_functions.jl")
 include("tools.jl")
-include("evolution.jl")
+include("timeevolution.jl")
 include("algorithms.jl")
 include("dCRAB.jl")
 include("GRAPE.jl")

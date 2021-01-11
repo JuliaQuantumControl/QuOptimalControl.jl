@@ -40,13 +40,22 @@ function init_GRAPE(X, n_timeslices, A, n_controls)
     # exp(gens)
     propagators = [similar(A) for i = 1:n_timeslices]
 
-    fom = zeros(n_ensemble)
+    fom = 0.0#zeros(n_ensemble)
     gradient = zeros(n_controls, n_timeslices)
     return (states, costates, generators, propagators, fom, gradient)
 end
 
 
 
+"""
+The SolutionResult stores important optimisation information in a nice format
+"""
+struct SolutionResult <: Solution
+    result # optimisation result (not saved)
+    fidelity # lets just extract the figure of merit that was reached
+    optimised_pulses # store an array of the optimised pulses
+    prob_info # can we store the struct or some BSON of the struct that was originally used
+end
 
 
 """

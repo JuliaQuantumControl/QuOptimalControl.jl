@@ -7,18 +7,6 @@ using DelimitedFiles
 Contains the solve function interfaces for now, until I learn a better way to do it
 """
 
-"""
-The SolutionResult stores important optimisation information in a nice format
-"""
-struct SolutionResult <: Solution
-    result # optimisation result (not saved)
-    fidelity # lets just extract the figure of merit that was reached
-    optimised_pulses # store an array of the optimised pulses
-    prob_info # can we store the struct or some BSON of the struct that was originally used
-end
-
-# how about instead of that we give some definitions based on algorithm directly
-
 function GRAPE(prob::Union{StateTransferProblem,UnitaryProblem}; inplace = true, optim_options=Optim.Options())
     if inplace
         GRAPE!(prob, optim_options)
@@ -54,30 +42,28 @@ function GRAPE!(problem, optim_options = Optim.Options())
 
     init = problem.initial_guess
 
-    res = Optim.optimize(Optim.only_fg!(to_optim!), init, Optim.LBFGS(), optim_options)
+    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
     solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
     return solres
 end
 
 """
-Solve function for use with inplace=false, StaticArray problemlems!
+sGRAPE
+
+This function solves the single problem defined in problem using Optim and the gradient for the problem type. Use this version with static arrays for 0 allocations!
 """
-function sGRAPE(problem, optim_options)
+function sGRAPE(problem, optim_options = Optim.Options())
     # prepare some storage arrays that we will make use of throughout the computation
-    Ut = Vector{typeof(problem.A[1])}(undef, problem.n_timeslices + 1)
-    Lt = Vector{typeof(problem.A[1])}(undef, problem.n_timeslices + 1)
-    gradient = zeros(problem.n_ensemble, problem.n_controls, problem.n_timeslices)
+    Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+    Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+    gradient = zeros(problem.n_controls, problem.n_timeslices)
 
-    wts = ones(problem.n_ensemble)
-
-    function to_optim!(F, G, x)
-        fom = 0.0
-        for k = 1:problem.n_ensemble
-            grad = @views gradient[k, :, :]
-            fom += _sGRAPE(problem.A[k], problem.B[k], x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init[k], problem.X_target[k], problem) * wts[k]
-        end
+    function _to_optim!(F, G, x)
+        grad = @views gradient[:, :]
+        fom = _sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem)
+        
         if G !== nothing
-            @views G .= sum(gradient .* wts, dims = 1)[1, :,:]
+            @views G .= grad
         end
         if F !== nothing
             return fom
@@ -86,7 +72,7 @@ function sGRAPE(problem, optim_options)
 
     init = problem.initial_guess
 
-    res = Optim.optimize(Optim.only_fg!(to_optim!), init, Optim.LBFGS(), optim_options)
+    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
     solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
 
     return solres

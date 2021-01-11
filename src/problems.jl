@@ -37,6 +37,11 @@ end
 Define an ensemble of problems, can provide any method for computing the new drift or control Hamiltonians
 """
 @kwdef struct ClosedEnsembleProblem
+    problem # for an ensemble of systems you'll provide one "template" problem
+    n_ensemble # we need to know the number of ensemble members
+    A_generators # need to find a better name but these will give us some discretisation
+    B_generators # similarly to above
+    weights # weights for calculating the figure of merit and gradient
 end
 
 """

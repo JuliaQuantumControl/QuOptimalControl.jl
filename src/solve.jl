@@ -20,6 +20,7 @@ function GRAPE(ens::ClosedEnsembleProblem; inplace = true, optim_options = Optim
     if inplace
         ensemble_GRAPE!(ens, optim_options)
     else
+        ensemble_sGRAPE(ens, optim_options)
     end
 end
 
@@ -87,9 +88,9 @@ end
 
 
 """
-GRAPE!
+ensemble_GRAPE!
 
-This function solves the single problem using Optim and the gradient defined for the problem type.
+This function solves the ensemble problem defined in ensemble_problem using the mutating GRAPE algorithm for efficiency.
 """
 function ensemble_GRAPE!(ensemble_problem, optim_options)
     # we expand the ensemble problem into an array of single problems that we can solve
@@ -129,6 +130,46 @@ function ensemble_GRAPE!(ensemble_problem, optim_options)
 end
 
 
+"""
+ensemble_sGRAPE
+
+This function solves the ensemble problem defined in ensemble_problem using the non-mutating version of the GRAPE algorithm.
+"""
+function ensemble_sGRAPE(ensemble_problem, optim_options)
+    ensemble_problem_array = init_ensemble(ensemble_problem)
+
+    problem = ensemble_problem_array[1]
+
+    Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+    Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+    
+    gradient = zeros(ensemble_problem.n_ensemble, problem.n_controls, problem.n_timeslices)
+
+    n_ensemble = ensemble_problem.n_ensemble
+    weights = ensemble_problem.weights
+
+    function _to_optim!(F, G, x)
+        fom = 0.0
+        for k = 1:n_ensemble
+            grad = @views gradient[k, :, :]
+            
+            fom += _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem) * weights[k]
+        
+        if G !== nothing
+            @views G .= sum(grad .* weights, dims = 1)[1,:,:]
+        end
+        if F !== nothing
+            return fom
+        end
+    end
+
+    init = problem.initial_guess
+
+    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+
+    return solres
+end
 
 
 

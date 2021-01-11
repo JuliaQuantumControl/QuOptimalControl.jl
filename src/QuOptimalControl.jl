@@ -16,7 +16,7 @@ export pw_evolve, pw_evolve_save, pw_evolve_T, pw_ham_save, pw_ham_save!, pw_gen
 export algorithm, gradientBased, gradientFree, GRAPE_approx, GRAPE_AD, dCRAB_options, ADGRAPE, GRAPE, dCRAB, init_GRAPE, GRAPE_new, GRAPE!
 export solve
 export grad_func
-export Problem, ClosedSystem, Experiment, StateTransferProblem, UnitaryProblem, OpenSystemCoherenceTransfer, ExperimentInterface
+export Problem, ClosedSystem, Experiment, StateTransferProblem, UnitaryProblem, ClosedEnsembleProblem, OpenSystemCoherenceTransfer, ExperimentInterface
 export visualise_expt_val, visualise_pulse
 
 end

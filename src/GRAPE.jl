@@ -1,25 +1,9 @@
 # collection of GRAPE algorithms
-
-
-
 using Zygote
 using Optim
 using ExponentialUtilities
 
 import Base.@kwdef
-
-"""
-Structs here simply used for dispatch to the correct method
-"""
-# @kwdef struct GRAPE_approx <: gradientBased 
-#     g_tol = 1e-6
-#     inplace = true # if you want to use StaticArrays set this to false!
-# end
-
-struct GRAPE_approx <: gradientBased end
-
-struct GRAPE_AD <: gradientBased end
-
 
 """
 Simple. Use Zygote to solve all of our problems
@@ -112,7 +96,6 @@ end
 Evolution functions for various GRAPE tasks
 """
 
-# there really must be a better way to do this, given that we simply need to multiply two matrices and sometimes conjugate
 """
 Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
 """
@@ -173,10 +156,6 @@ function grad_func!(prob::UnitarySynthesis, t, dt, B, U, L, props, gens, store):
     @views mul!(store, U[t]', L[t])
     @views 2.0 * real((1.0im * dt) .* tr(L[t]' * B * U[t]) * tr(store))
 end
-
-# function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens, store)::Float64
-#     @views real(tr(L[t]' * 1.0im * dt * commutator(B, U[t])))
-# end
 
 function grad_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, U, L, props, gens, store)::Float64
     @views mul!(store, L[t]', commutator(B, U[t]))

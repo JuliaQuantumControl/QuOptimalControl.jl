@@ -1,12 +1,12 @@
 """
 Just some useful functions
 """
-
 using BSON
 using DelimitedFiles
 
 using StaticArrays
-const σₓ = SMatrix{} # etc
+
+#const σₓ = SMatrix{} # etc
 
 
 

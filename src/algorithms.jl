@@ -2,6 +2,3 @@
 abstract type algorithm end # capitalisation?
 abstract type gradientBased <: algorithm end 
 abstract type gradientFree <: algorithm end
-
-
-

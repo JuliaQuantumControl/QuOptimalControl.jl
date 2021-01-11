@@ -58,7 +58,7 @@ Static GRAPE
 
 Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
 """
-function _sGRAPE(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, X_init, X_target, problem) where T
+function _fom_and_gradient_sGRAPE(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, X_init, X_target, problem) where T
     
     dt = duration / n_timeslices
     # arrays that hold static arrays?

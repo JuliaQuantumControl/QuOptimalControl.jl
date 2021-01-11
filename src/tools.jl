@@ -1,10 +1,11 @@
 """
 Just some useful functions
 """
+abstract type Solution end
 
 using BSON
 using DelimitedFiles
-
+using Setfield
 using StaticArrays
 
 #const σₓ = SMatrix{} # etc
@@ -43,6 +44,22 @@ function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
     fom = zeros(n_ensemble)
     gradient = zeros(n_controls, n_timeslices)
     return (states, costates, generators, propagators, fom, gradient)
+end
+
+"""
+Initialise an ensemble from an ensemblr problem definition. Right now this creates an array of problems just now, not sure if this is the best idea though. 
+"""
+function init_ensemble(ens)
+    ensemble_problem_array = [deepcopy(ens.problem) for k = 1:ens.n_ensemble]
+    for k = 1:ens.n_ensemble
+        prob_to_update = ensemble_problem_array[k]
+        prob_to_update = @set prob_to_update.A = ens.A_generators(k) 
+        prob_to_update = @set prob_to_update.B = ens.B_generators(k)
+        prob_to_update = @set prob_to_update.X_init = ens.X_init_gens(k)
+        prob_to_update = @set prob_to_update.X_target = ens.X_target_gens(k)
+        ensemble_problem_array[k] = prob_to_update
+    end
+    ensemble_problem_array
 end
 
 """

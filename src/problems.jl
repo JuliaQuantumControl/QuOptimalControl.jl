@@ -41,6 +41,8 @@ Define an ensemble of problems, can provide any method for computing the new dri
     n_ensemble # we need to know the number of ensemble members
     A_generators # need to find a better name but these will give us some discretisation
     B_generators # similarly to above
+    X_init_generators
+    X_target_generators
     weights # weights for calculating the figure of merit and gradient
 end
 

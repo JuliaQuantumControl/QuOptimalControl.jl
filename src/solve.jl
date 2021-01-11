@@ -1,4 +1,3 @@
-abstract type Solution end
 using Optim
 using FileWatching
 using DelimitedFiles
@@ -6,7 +5,6 @@ using DelimitedFiles
 """
 Contains the solve function interfaces for now, until I learn a better way to do it
 """
-
 function GRAPE(prob::Union{StateTransferProblem,UnitaryProblem}; inplace = true, optim_options=Optim.Options())
     if inplace
         GRAPE!(prob, optim_options)
@@ -15,6 +13,11 @@ function GRAPE(prob::Union{StateTransferProblem,UnitaryProblem}; inplace = true,
     end
 end
 
+"""
+Handles solving ensemble problems with GRAPE
+"""
+function GRAPE(ens::ClosedEnsembleProblem, inplace = true, optim_options = Optim.Options())
+end
 
 """
 GRAPE!
@@ -24,7 +27,7 @@ This function solves the single problem using Optim and the gradient defined for
 function GRAPE!(problem, optim_options = Optim.Options())
     
     # initialise holding arrays for inplace operations, these will be modified
-    state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, problem.A, problem.n_controls)
+    state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
     
     evolve_store = similar(state_store[1])
 
@@ -60,7 +63,7 @@ function sGRAPE(problem, optim_options = Optim.Options())
 
     function _to_optim!(F, G, x)
         grad = @views gradient[:, :]
-        fom = _sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem)
+        fom = _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem)
         
         if G !== nothing
             @views G .= grad
@@ -123,92 +126,3 @@ function ADGRAPE(prob::UnitaryProblem; optim_options = Optim.Options())
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 end
 
-
-
-# """
-# ClosedSystemStateTransfer using dCRAB to solve the prob
-# Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
-# """
-# function _solve(prob::StateTransferProblem, alg::dCRAB_options)
-#     # we define our own functional here for a closed system
-
-#     wts = ones(prob.n_ensemble)
-#     function user_functional(x)
-#         fom = 0.0
-#         for k = 1:prob.n_ensemble
-#             # we get an a 2D array of pulses
-#             U = pw_evolve(prob.A[k], prob.B[k], x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
-#             # U = reduce(*, U)
-#             fom += C2(prob.X_target, U * prob.X_init) * wts[k]
-#         end
-#         fom
-#     end
-
-#     coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)
-
-#     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
-
-# end
-
-
-# """
-# Unitary synthesis using dCRAB to solve the prob
-# Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
-# """
-# function _solve(prob::UnitaryProblem, alg::dCRAB_options)
-#     # we define our own functional here for a closed system
-#     wts = ones(prob.n_ensemble)
-
-#     function user_functional(x)
-#         fom = 0.0
-#         for k = 1:prob.n_ensemble
-#             # we get an a 2D array of pulses
-#             U = pw_evolve(prob.A[k], prob.B[k], x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices)
-#             # U = reduce(*, U)
-#             fom += C1(prob.X_target[k], (U * prob.X_init[k])) * wts[k]
-#         end
-#         fom
-#     end
-
-#     coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)
-
-#     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
-
-# end
-
-# """
-# Closed loop experiment optimisation using dCRAB, the user functional isn't defined by the user at the moment, instead we define it. 
-# """
-# function _solve(prob::Experiment, alg::dCRAB_options)
-#     """
-#     user functional that will create a pulse file and start the experiment
-#     """
-#     function user_functional(x)
-#         # we get a 2D array of pulses, with delimited files we can write this to a file
-#         open(prob.pulse_path, "w") do io
-#             writedlm(io, x')
-#         end
-#         # TODO you need to wait can use built in FileWatching function 
-#         prob.start_exp()
-#         o = watch_file(prob.infidelity_path, prob.timeout) # might need to monitor this differently
-
-#         # then read in the result
-#         infid = readdlm(prob.infidelity_path)[1]
-#     end
-
-#     coeffs, pulses, optim_results = dCRAB(prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, prob.duration, alg.n_freq, alg.n_coeff, prob.initial_guess, user_functional)
-
-#     solres = SolutionResult(optim_results, [optim_results[j].minimum for j = 1:length(optim_results)], pulses, prob)
-
-# end
-
-# """
-# Can we combine algorithms to improve how we solve things? Comes from discussion with Phila
-# """
-# function hybrid_solve(prob, alg_list)
-#     for alg in alg_list
-#         sol = _solve(prob, alg)
-#         prob.initial_guess[:] = sol.optimised_pulses
-#     end
-#     sol
-# end

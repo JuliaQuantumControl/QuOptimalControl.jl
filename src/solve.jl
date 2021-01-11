@@ -16,7 +16,7 @@ end
 """
 Handles solving ensemble problems with GRAPE
 """
-function GRAPE(ens::ClosedEnsembleProblem, inplace = true, optim_options = Optim.Options())
+function GRAPE(ens::ClosedEnsembleProblem; inplace = true, optim_options = Optim.Options())
     if inplace
         ensemble_GRAPE!(ens, optim_options)
     else

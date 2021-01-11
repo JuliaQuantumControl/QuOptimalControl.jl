@@ -1,6 +1,7 @@
 """
 Just some useful functions
 """
+
 using BSON
 using DelimitedFiles
 
@@ -29,19 +30,19 @@ end
 """
 Initialise all the storage arrays that will be used in a GRAPE optimisation
 """
-function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
+function init_GRAPE(X, n_timeslices, A, n_controls)
     # states
-    U = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
+    states = [similar(X) for i = 1:n_timeslices + 1]
     # costates
-    L = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
+    costates = [similar(X) for i = 1:n_timeslices + 1]
     # list of generators
-    gens = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
+    generators = [similar(A) for i = 1:n_timeslices]
     # exp(gens)
-    props = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
+    propagators = [similar(A) for i = 1:n_timeslices]
 
     fom = zeros(n_ensemble)
-    gradient = zeros(n_ensemble, n_controls, n_timeslices)
-    return (U, L, gens, props, fom, gradient)
+    gradient = zeros(n_controls, n_timeslices)
+    return (states, costates, generators, propagators, fom, gradient)
 end
 
 

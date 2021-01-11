@@ -21,9 +21,9 @@ function _ADGRAPE(functional, x; optim_options = Optim.options())
 end
 
 """
-Flexible GRAPE algorithm that can use any array type to solve GRAPE problems. This is best when your system is so large that StaticArrays cannot be used! The arrays given will be updated in place!
+Evaluate the figure of merit and the gradient (updated in-place) for a given specification of the problem type problem.
 """
-function _GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem) where T
+function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem) where T
     
     dt = duration / n_timeslices
     
@@ -101,7 +101,7 @@ Evolution functions for various GRAPE tasks
 """
 Function to compute the evolution for Unitary synthesis, since here we simply stack propagators
 """
-function evolve_func(prob::UnitarySynthesis, t, state, costate, propagator, gens; forward = true)
+function evolve_func(prob::UnitaryProblem, t, state, costate, propagator, gens; forward = true)
     if forward
         propagator[t] * state[t]
     else
@@ -112,7 +112,7 @@ end
 """
 Evolution function for use with density matrices
 """
-function evolve_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, state, L, propagator, gens ;forward = true)
+function evolve_func(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}, t, state, L, propagator, gens ;forward = true)
     if forward
         propagator[t] * state[t] * propagator[t]'
     else
@@ -125,7 +125,7 @@ end
 """
 In-place evolution functions 
 """
-function evolve_func!(prob::UnitarySynthesis, t, state, costate, propagator, gens, store; forward = true)
+function evolve_func!(prob::UnitaryProblem, t, state, costate, propagator, gens, store; forward = true)
     if forward
         @views mul!(state[t+1], propagator[t], state[t])
     else
@@ -136,7 +136,7 @@ end
 """
 In-place evolution functions, I think these don't allocate at all
 """
-function evolve_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, state, costate, propagator, gens, store; forward = true)
+function evolve_func!(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}, t, state, costate, propagator, gens, store; forward = true)
     if forward
         @views mul!(store, state[t], propagator[t]')
         @views mul!(state[t+1], propagator[t], store)
@@ -154,23 +154,23 @@ Grad functions for GRAPE
 """
 First order in dt gradient from Khaneja paper for unitary synthesis
 """
-function grad_func!(prob::UnitarySynthesis, t, dt, B, state, costate, props, gens, store)::Float64
+function grad_func!(prob::UnitaryProblem, t, dt, B, state, costate, props, gens, store)::Float64
     @views mul!(store, state[t]', costate[t])
     @views 2.0 * real((1.0im * dt) .* tr(costate[t]' * B * state[t]) * tr(store))
 end
 
-function grad_func!(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, state, costate, props, gens, store)::Float64
+function grad_func!(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}, t, dt, B, state, costate, props, gens, store)::Float64
     @views mul!(store, costate[t]', commutator(B, state[t]))
     real(tr((1.0im * dt) .* store))
 end
 
-function grad_func(prob::UnitarySynthesis, t, dt, B, state, costate, props, gens)
+function grad_func(prob::UnitaryProblem, t, dt, B, state, costate, props, gens)
     2.0 * real((-1.0im * dt)* 
         tr(costate[t]' * B * state[t]) * tr(state[t]' * costate[t]) 
     )
 end
 
-function grad_func(prob::Union{ClosedStateTransfer,OpenSystemCoherenceTransfer}, t, dt, B, state, costate, props, gens)
+function grad_func(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}, t, dt, B, state, costate, props, gens)
     real(tr(
         (1.0im * dt) .* (costate[t]' * commutator(B, state[t]))
     ))

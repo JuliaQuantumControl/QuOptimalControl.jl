@@ -19,7 +19,7 @@ end
 
 # how about instead of that we give some definitions based on algorithm directly
 
-function GRAPE(prob::Union{ClosedSystem,OpenSystem}; inplace = true, optim_options=Optim.Options())
+function GRAPE(prob::Union{StateTransferProblem,UnitaryProblem}; inplace = true, optim_options=Optim.Options())
     if inplace
         GRAPE!(prob, optim_options)
     else
@@ -29,52 +29,52 @@ end
 
 
 """
-This solve function should handle ClosedStateTransfer, UnitarySynthesis and an open system governed in Liouville space, since the bulk of the code remains the same and we dispatch based on prob type to the correct evolution algorithms (Khaneja et. al.).
-"""
-function GRAPE!(prob, optim_options)
-    # do stuff with _GRAPE!
-    U, L, gens, props, fom, gradient = init_GRAPE(prob.X_init[1], prob.n_timeslices, prob.n_ensemble, prob.A[1], prob.n_controls)
-    wts = ones(prob.n_ensemble)
-    evolve_store = similar(U[:,1][1])
+GRAPE!
 
-    function to_optim!(F, G, x)
-        fom = 0.0
-        for k = 1:prob.n_ensemble
-            fom += @views _GRAPE!(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], U[:,k], L[:,k], gens[:,k], props[:,k], prob.X_init[k], prob.X_target[k], evolve_store, prob) * wts[k]
-        end
+This function solves the single problem using Optim and the gradient defined for the problem type.
+"""
+function GRAPE!(problem, optim_options = Optim.Options())
+    
+    # initialise holding arrays for inplace operations, these will be modified
+    state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, problem.A, problem.n_controls)
+    
+    evolve_store = similar(state_store[1])
+
+    function _to_optim!(F, G, x)        
+        fom = @views _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient, state_store, costate_store, generators, propagators, problem.X_init, problem.X_target, evolve_store, problem)
+
         if G !== nothing
-            @views G .= sum(gradient .* wts, dims = 1)[1, :,:]
+            @views G .= gradient
         end
         if F !== nothing
             return fom
-        end 
+        end
     end
 
-    init = prob.initial_guess
+
+    init = problem.initial_guess
 
     res = Optim.optimize(Optim.only_fg!(to_optim!), init, Optim.LBFGS(), optim_options)
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
-
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
     return solres
-
 end
 
 """
-Solve function for use with inplace=false, StaticArray problems!
+Solve function for use with inplace=false, StaticArray problemlems!
 """
-function sGRAPE(prob, optim_options)
+function sGRAPE(problem, optim_options)
     # prepare some storage arrays that we will make use of throughout the computation
-    Ut = Vector{typeof(prob.A[1])}(undef, prob.n_timeslices + 1)
-    Lt = Vector{typeof(prob.A[1])}(undef, prob.n_timeslices + 1)
-    gradient = zeros(prob.n_ensemble, prob.n_controls, prob.n_timeslices)
+    Ut = Vector{typeof(problem.A[1])}(undef, problem.n_timeslices + 1)
+    Lt = Vector{typeof(problem.A[1])}(undef, problem.n_timeslices + 1)
+    gradient = zeros(problem.n_ensemble, problem.n_controls, problem.n_timeslices)
 
-    wts = ones(prob.n_ensemble)
+    wts = ones(problem.n_ensemble)
 
     function to_optim!(F, G, x)
         fom = 0.0
-        for k = 1:prob.n_ensemble
+        for k = 1:problem.n_ensemble
             grad = @views gradient[k, :, :]
-            fom += _sGRAPE(prob.A[k], prob.B[k], x, prob.n_timeslices, prob.duration, prob.n_controls, grad, Ut, Lt, prob.X_init[k], prob.X_target[k], prob) * wts[k]
+            fom += _sGRAPE(problem.A[k], problem.B[k], x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init[k], problem.X_target[k], problem) * wts[k]
         end
         if G !== nothing
             @views G .= sum(gradient .* wts, dims = 1)[1, :,:]
@@ -84,16 +84,16 @@ function sGRAPE(prob, optim_options)
         end
     end
 
-    init = prob.initial_guess
+    init = problem.initial_guess
 
     res = Optim.optimize(Optim.only_fg!(to_optim!), init, Optim.LBFGS(), optim_options)
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
 
     return solres
 end
 
 """
-Solve closed state transfer prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
+Solve closed state transfer problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
 function ADGRAPE(prob::ClosedStateTransfer; optim_options = Optim.Options())
     wts = ones(prob.n_ensemble)

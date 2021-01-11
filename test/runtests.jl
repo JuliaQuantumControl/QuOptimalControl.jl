@@ -12,15 +12,14 @@ using LinearAlgebra
     Sy = [0.0 -1.0im; 1.0im 0.0+0.0im]/2
     Sz = [1.0 0.0; 0.0 -1.0+0.0im]/2
     
-    prob = ClosedStateTransfer(
-        B = [[Sx, Sy]],
-        A = [Sz],
+    prob = StateTransferProblem(
+        B = [Sx, Sy],
+        A = Sz,
         X_init = [ρinit],
         X_target = [ρfin],
         duration = 1.0,
         n_timeslices = 10,
         n_controls = 2,
-        n_ensemble = 1,
         initial_guess = rand(2, 10)
     )
 

@@ -99,7 +99,7 @@ end
 """
 An almost allocation free (1 alloc in my tests) version of the Generator saving function, this saves the generators of propagators (implementation might differ for prob)
 """
-function pw_gen_save!(prob::Union{ClosedStateTransfer,UnitarySynthesis}, H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, duration, out) where T
+function pw_gen_save!(prob::Union{StateTransferProblem,UnitaryProblem}, H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, duration, out) where T
     K = n_pulses
     Htot = similar(H₀)
     dt = duration/timeslices

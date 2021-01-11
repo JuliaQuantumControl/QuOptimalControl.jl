@@ -33,16 +33,16 @@ Initialise all the storage arrays that will be used in a GRAPE optimisation
 """
 function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
     # states
-    states = [similar(X) for i = 1:n_timeslices + 1 for j = 1:n_ensemble]
+    states = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
     # costates
-    costates = [similar(X) for i = 1:n_timeslices + 1 for j = 1:n_ensemble]
+    costates = [similar(X) for i = 1:n_timeslices + 1, j = 1:n_ensemble]
     # list of generators
-    generators = [similar(A) for i = 1:n_timeslices for j = 1:n_ensemble]
+    generators = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
     # exp(gens)
-    propagators = [similar(A) for i = 1:n_timeslices for j = 1:n_ensemble]
+    propagators = [similar(A) for i = 1:n_timeslices, j = 1:n_ensemble]
 
     fom = zeros(n_ensemble)
-    gradient = zeros(n_controls, n_timeslices)
+    gradient = zeros(n_ensemble, n_controls, n_timeslices)
     return (states, costates, generators, propagators, fom, gradient)
 end
 

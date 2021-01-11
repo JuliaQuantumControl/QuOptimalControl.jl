@@ -95,7 +95,7 @@ end
 """
 Solve closed state transfer problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
-function ADGRAPE(prob::ClosedStateTransfer; optim_options = Optim.Options())
+function ADGRAPE(prob::StateTransferProblem; optim_options = Optim.Options())
     wts = ones(prob.n_ensemble)
     D = size(prob.A[1])[1]
     u0 = typeof(prob.A[1])(I(D))
@@ -118,7 +118,7 @@ end
 """
 Solve a unitary synthesis prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
 """
-function ADGRAPE(prob::UnitarySynthesis; optim_options = Optim.Options())
+function ADGRAPE(prob::UnitaryProblem; optim_options = Optim.Options())
     wts = ones(prob.n_ensemble)
     u0 = typeof(prob.A[1])(I(D))
 
@@ -143,7 +143,7 @@ end
 # ClosedSystemStateTransfer using dCRAB to solve the prob
 # Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
 # """
-# function _solve(prob::ClosedStateTransfer, alg::dCRAB_options)
+# function _solve(prob::StateTransferProblem, alg::dCRAB_options)
 #     # we define our own functional here for a closed system
 
 #     wts = ones(prob.n_ensemble)
@@ -169,7 +169,7 @@ end
 # Unitary synthesis using dCRAB to solve the prob
 # Here we define a functional for the user, since we can assume that this is the type of prob that they want to solve
 # """
-# function _solve(prob::UnitarySynthesis, alg::dCRAB_options)
+# function _solve(prob::UnitaryProblem, alg::dCRAB_options)
 #     # we define our own functional here for a closed system
 #     wts = ones(prob.n_ensemble)
 

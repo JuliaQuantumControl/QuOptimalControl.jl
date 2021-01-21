@@ -34,5 +34,3 @@ BenchmarkTools.@benchmark pw_evolve($Hsys_static, $HCtrl_static2, $input_arr, $n
 # benchmark mutable
 BenchmarkTools.@benchmark pw_evolve($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices, $I4_mutable)
 
-
-@code_warntype pw_evolve(Hsys_static, HCtrl_static2, input_arr, n_pulses, dt, n_slices)

@@ -7,7 +7,7 @@ Contains code to perform time evolution
 """
 Given a set of Hamiltonians (drift and control) compute the evolution
 """
-function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
+function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T <: StaticMatrix
     K = n_pulses
     U = U0
     for i = 1:timeslices
@@ -20,6 +20,24 @@ function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pul
     end
     U
 end
+
+"""
+Given a set of Hamiltonians (drift and control) compute the evolution using fastExpm for the matrix exponential. (For now we duplicate the code)
+"""
+function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
+    K = n_pulses
+    U = U0
+    for i = 1:timeslices
+        # compute the propagator
+        Htot = H₀
+        for j = 1:K
+            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
+        @views U = fastExpm(-1.0im * timestep * Htot) * U
+    end
+    U
+end
+
 
 """
 Given a set of Hamiltonians (drift and control) compute the evolution, Zygote compatible

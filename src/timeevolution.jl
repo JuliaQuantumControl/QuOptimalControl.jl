@@ -7,19 +7,18 @@ Contains code to perform time evolution
 """
 Given a set of Hamiltonians (drift and control) compute the evolution
 """
-function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices)::T where T
-    D = size(H₀)[1] # get dimension of the system
+function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
     K = n_pulses
-    U0::T = T(I(D))
+    U = U0
     for i = 1:timeslices
         # compute the propagator
         Htot = H₀
         for j = 1:K
             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
-        @views U0 = exp(-1.0im * timestep * Htot) * U0
+        @views U = exp(-1.0im * timestep * Htot) * U
     end
-    U0
+    U
 end
 
 """

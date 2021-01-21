@@ -29,7 +29,7 @@ function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration
     
     fwd_state_store[1] .= X_init
     bwd_costate_store[end] .= X_target
-
+    # this seems really stupid since we dont ever use the generators again, we can just keep the propagators instead
     pw_ham_save!(A, B, control_array, n_controls, n_timeslices, @view generators[:])
     @views propagators[:] .= exp.(generators[:] .* (-1.0im * dt))
 

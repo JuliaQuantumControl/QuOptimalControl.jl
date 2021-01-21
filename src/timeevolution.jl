@@ -46,12 +46,11 @@ lets dispatch to this properly sometime
 function pw_evolve_T(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
     x_arr = complex.(real.(x_arr)) # needed for Zygote to use complex numbers internally
     U = U0
-    K = n_pulses
     # U0 = T(I(D))
     for i = 1:timeslices
         # compute the propagator
         Htot = H₀
-        for j = 1:k
+        for j = 1:n_pulses
             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
         U = exp(-1.0im * timestep * Htot) * U
@@ -62,23 +61,40 @@ end
 """
 Given a set of Hamiltonians compute the piecewise evolution saving the propagator for each time slice
 """
-function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T
+function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T <: StaticMatrix
     D = size(H₀)[1] # get dimension of the system
-    K = n_pulses
-    out = T[]
-    U0 = T(I(D))
+    #out = T[]
+    out = Vector{T}(undef, timeslices)
     for i = 1:timeslices
     # compute the propagator
         Htot = H₀
-        for j = 1:K
+        for j = 1:n_pulses
             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
-        @views U0 = exp(-1.0im * timestep * Htot)# * U0
-        append!(out, [U0])
+        @views U = exp(-1.0im * timestep * Htot)# * U
+        out[i] = U
+        # append!(out, [U])
     end
     out
 end
 
+
+function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T
+    D = size(H₀)[1] # get dimension of the system
+    #out = T[]
+    out = Vector{T}(undef, timeslices)
+    for i = 1:timeslices
+    # compute the propagator
+        Htot = H₀
+        for j = 1:n_pulses
+            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+        end
+        @views U = fastExpm(-1.0im * timestep * Htot)# * U
+        out[i] = U
+        # append!(out, [U])
+    end
+    out
+end
 
 
 """

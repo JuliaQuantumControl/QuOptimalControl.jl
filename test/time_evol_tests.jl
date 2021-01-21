@@ -34,3 +34,17 @@ BenchmarkTools.@benchmark pw_evolve($Hsys_static, $HCtrl_static2, $input_arr, $n
 # benchmark mutable
 BenchmarkTools.@benchmark pw_evolve($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices, $I4_mutable)
 
+# benchmark static _T
+BenchmarkTools.@benchmark pw_evolve_T($Hsys_static, $HCtrl_static2, $input_arr, $n_pulses, $dt, $n_slices, $I4)
+
+# benchmark mutable
+BenchmarkTools.@benchmark pw_evolve_T($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices, $I4_mutable)
+
+# now we test some of the stuff that actually gets used
+BenchmarkTools.@benchmark pw_evolve_save($Hsys_static, $HCtrl_static2, $input_arr, $n_pulses, $dt, $n_slices)
+
+BenchmarkTools.@benchmark pw_evolve_save($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices)
+
+BenchmarkTools.@benchmark pw_evolve_save($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices)
+
+

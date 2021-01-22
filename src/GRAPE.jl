@@ -10,7 +10,7 @@ Simple. Use Zygote to solve all of our problems
 Compute the gradient of a functional f(x) wrt. x
 """
 #  f_tol = 1e-3, g_tol = 1e-6, iters=1000
-function _ADGRAPE(functional, x; optim_options = Optim.options())
+function _ADGRAPE(functional, x; optim_options = Optim.Options())
 
     function grad_functional!(G, x)
         G .= Zygote.gradient(functional, x)[1]

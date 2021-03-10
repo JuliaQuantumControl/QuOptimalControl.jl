@@ -1,3 +1,4 @@
 Manifest.toml
 *.txt
 *.bson
+.vscode/settings.json

@@ -2,8 +2,6 @@
 
 Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 
-**If you'd like to help, please get in touch with me! You can reach me @nv_alastair on Twitter or I guess by opening an issue on here...?**
-
 ## Usage
 
 Trying to mimic the interface that DifferentialEquations.jl uses we offer several problem definitions. Problems define the dynamics of the quantum system.
@@ -43,6 +41,15 @@ visualise_pulse(sol.optimised_pulses, duration = prob.duration)
 ```
 
 ![Bar plot of pulse amplitudes](https://raw.githubusercontent.com/alastair-marshall/QuOptimalControl.jl/master/assets/pulsevis.png "Pulse output")
+
+## Installation
+
+Using Julia's package manager QuOptimalControl.jl is easy to install and get start with!
+
+```julia
+] add QuOptimalControl
+```
+
 
 ### Algorithms
 

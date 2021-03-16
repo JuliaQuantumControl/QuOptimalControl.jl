@@ -61,7 +61,7 @@ end
 """
 Given a set of Hamiltonians compute the piecewise evolution saving the propagator for each time slice
 """
-function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T <: StaticMatrix
+function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timestep, timeslices) where T <: StaticMatrix
     D = size(H₀)[1] # get dimension of the system
     #out = T[]
     out = Vector{T}(undef, timeslices)
@@ -79,7 +79,7 @@ function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, 
 end
 
 
-function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices) where T
+function pw_evolve_save_new(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timestep, timeslices) where T
     D = size(H₀)[1] # get dimension of the system
     #out = T[]
     out = Vector{T}(undef, timeslices)

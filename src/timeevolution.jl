@@ -143,16 +143,16 @@ end
 """
 An almost allocation free (1 alloc in my tests) function to save the propagator
 """
-function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out) where T
+function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out::Array{T, 1}) where T
     K = n_pulses
     Htot = similar(H₀)
 
-    @views @inbounds for i = 1:timeslices
+    @inbounds for i = 1:timeslices
         Htot .= 0.0 .* Htot
         @inbounds for j = 1:K
-            @. Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+            @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
         end
-        # out[i] = fastExpm((-1.0im * timestep) .* (Htot + H₀))
-        out[i] .= Htot + H₀
+        @views out[i] = fastExpm((-1.0im * timestep) .* (Htot .+ H₀))
+        # @views out[i] .= i4 .* i#Htot + H₀
     end
 end

@@ -1,7 +1,6 @@
 # collection of GRAPE algorithms
 using Zygote
 using Optim
-using ExponentialUtilities
 
 import Base.@kwdef
 
@@ -15,7 +14,7 @@ function _ADGRAPE(functional, x; optim_options = Optim.Options())
     function grad_functional!(G, x)
         G .= Zygote.gradient(functional, x)[1]
     end
-    
+
     res = optimize(functional, grad_functional!, x, LBFGS(), optim_options)
 
 end
@@ -24,9 +23,9 @@ end
 Evaluate the figure of merit and the gradient (updated in-place) for a given specification of the problem type problem.
 """
 function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem) where T
-    
+
     dt = duration / n_timeslices
-    
+
     fwd_state_store[1] .= X_init
     bwd_costate_store[end] .= X_target
     # this seems really stupid since we dont ever use the generators again, we can just keep the propagators instead
@@ -42,7 +41,7 @@ function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration
     end
 
     t = n_timeslices
-    
+
     for c = 1:n_controls
         for t = 1:n_timeslices
             @views gradient[c, t] = grad_func!(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, generators, evolve_store)
@@ -59,14 +58,14 @@ Static GRAPE
 Flexible GRAPE algorithm for use with StaticArrays where the size is always fixed. This works best if there are < 100 elements in the arrays. The result is that you can avoid allocations (this whole function allocates just 4 times in my tests). If your system is too large then try the GRAPE! algorithm above which should work for generic array types!
 """
 function _fom_and_gradient_sGRAPE(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, X_init, X_target, problem) where T
-    
+
     dt = duration / n_timeslices
     # arrays that hold static arrays?
     fwd_state_store[1] = X_init
     bwd_costate_store[end] = X_target
 
 
-    # now we want to compute the generators 
+    # now we want to compute the generators
     generators = pw_ham_save(A, B, control_array, n_controls,n_timeslices)
     propagators = exp.(generators .* (-1.0im * dt))
 
@@ -123,7 +122,7 @@ end
 
 
 """
-In-place evolution functions 
+In-place evolution functions
 """
 function evolve_func!(prob::UnitaryProblem, t, state, costate, propagator, gens, store; forward = true)
     if forward
@@ -165,8 +164,8 @@ function grad_func!(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer
 end
 
 function grad_func(prob::UnitaryProblem, t, dt, B, state, costate, props, gens)
-    2.0 * real((-1.0im * dt)* 
-        tr(costate[t]' * B * state[t]) * tr(state[t]' * costate[t]) 
+    2.0 * real((-1.0im * dt)*
+        tr(costate[t]' * B * state[t]) * tr(state[t]' * costate[t])
     )
 end
 
@@ -175,5 +174,3 @@ function grad_func(prob::Union{StateTransferProblem,OpenSystemCoherenceTransfer}
         (1.0im * dt) .* (costate[t]' * commutator(B, state[t]))
     ))
 end
-
-

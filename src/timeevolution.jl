@@ -76,19 +76,19 @@ function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}
 end
 
 
-function pw_evolve_save_new(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timestep, timeslices) where T
-    out = Vector{T}(undef, timeslices)
-    for i = 1:timeslices
-        # compute the propagator
-        Htot = H₀
-        for j = 1:n_pulses
-            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
-        end
-        @views U = fastExpm(-1.0im * timestep * Htot)# * U
-        out[i] = U
-    end
-    out
-end
+# function pw_evolve_save_new(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timestep, timeslices) where T
+#     out = Vector{T}(undef, timeslices)
+#     for i = 1:timeslices
+#         # compute the propagator
+#         Htot = H₀
+#         for j = 1:n_pulses
+#             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+#         end
+#         @views U = fastExpm(-1.0im * timestep * Htot)# * U
+#         out[i] = U
+#     end
+#     out
+# end
 
 
 """
@@ -152,7 +152,21 @@ function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2},
         @inbounds for j = 1:K
             @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
         end
-        @views out[i] = fastExpm((-1.0im * timestep) .* (Htot .+ H₀))
-        # @views out[i] .= i4 .* i#Htot + H₀
+        @views out[i] .= fastExpm((-1.0im * timestep) .* (Htot .+ H₀))
+    end
+end
+
+
+function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out) where T <: StaticMatrix
+    K = n_pulses
+    Htot = similar(H₀)
+
+    @inbounds for i = 1:timeslices
+        Htot .= 0.0 .* Htot
+        @inbounds for j = 1:K
+            @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
+        end
+        @show typeof(Htot .+ H₀)
+        @views out[i] .= exp((-1.0im * timestep) .* (Htot .+ H₀))
     end
 end

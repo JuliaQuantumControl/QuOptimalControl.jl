@@ -58,10 +58,15 @@ BenchmarkTools.@benchmark QuOptimalControl.pw_prop_save!($Hsys_mutable, $HCtrl_m
 
 BenchmarkTools.@benchmark QuOptimalControl.pw_prop_save!($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $n_slices, $dt, $outmut)
 
+BenchmarkTools.@benchmark QuOptimalControl.pw_prop_save!($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $n_slices, $dt, $outmut)
 
 
 
-@code_warntype QuOptimalControl.pw_prop_save!(Hsys_mutable, HCtrl_mutable2, input_arr, n_pulses, n_slices, dt, outmut)
+BenchmarkTools.@benchmark QuOptimalControl.pw_prop_save!($Hsys_static, $HCtrl_static2, $input_arr, $n_pulses, $n_slices, $dt, $outstat)
+
+
+QuOptimalControl.pw_prop_save!($Hsys_static, $HCtrl_static2, $input_arr, $n_pulses, $n_slices, $dt, $outstat)
+
 
 # now we test some of the stuff that actually gets used
 BenchmarkTools.@benchmark pw_evolve_save($Hsys_static, $HCtrl_static2, $input_arr, $n_pulses, $dt, $n_slices)
@@ -69,19 +74,3 @@ BenchmarkTools.@benchmark pw_evolve_save($Hsys_static, $HCtrl_static2, $input_ar
 BenchmarkTools.@benchmark pw_evolve_save($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices)
 
 BenchmarkTools.@benchmark pw_evolve_save($Hsys_mutable, $HCtrl_mutable2, $input_arr, $n_pulses, $dt, $n_slices)
-
-
-
-function test!(x)
-    for i = 1:10
-        @views x[:,:,i] .= I(2) * i
-    end
-end
-
-
-
-tester = zeros(2,2, 10)
-
-test!(tester)
-
-@benchmark test!($tester)

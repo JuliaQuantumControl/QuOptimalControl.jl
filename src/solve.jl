@@ -35,12 +35,13 @@ function GRAPE!(problem, optim_options)
     state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
 
     evolve_store = similar(state_store[1])
+    grad = @views gradient[1,:,:]
 
     function _to_optim!(F, G, x)
-        fom = _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient, state_store, costate_store, propagators, problem.X_init, problem.X_target, evolve_store, problem, 1)
+        fom = _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, state_store, costate_store, propagators, problem.X_init, problem.X_target, evolve_store, problem)
 
         if G !== nothing
-            @views G .= gradient[1,:,:]
+            @views G .= grad
         end
         if F !== nothing
             return fom
@@ -99,7 +100,7 @@ function ensemble_GRAPE!(ensemble_problem, optim_options)
     # to initialise the holding arrays we define a problem
     problem = ensemble_problem_array[1]
     # initialise holding arrays for inplace operations, these will be modified
-    state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, ensemble_problem.n_ensemble, problem.A, problem.n_controls)
+    state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, ensemble_problem.n_ensemble, problem.A, problem.n_controls)
 
     evolve_store = similar(state_store[1])
     weights = ensemble_problem.weights
@@ -110,7 +111,7 @@ function ensemble_GRAPE!(ensemble_problem, optim_options)
         for k = 1:n_ensemble
             problem = ensemble_problem_array[k]
 
-            fom += @views _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], generators[:,k], propagators[:,k], problem.X_init, problem.X_target, evolve_store, problem) * weights[k]
+            fom += @views _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], propagators[:,k], problem.X_init, problem.X_target, evolve_store, problem) * weights[k]
         end
 
         if G !== nothing

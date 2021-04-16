@@ -28,6 +28,12 @@ const UfinS = SMatrix{2,2,ComplexF64}(1/sqrt(2) * [0 1; 1 -0.0+0.0im])
 A_gens = k -> (k - 2.5) / 2.5 * Sz * 5
 B_gens = k -> [Sx, Sy]
 
+
+
+A_gens_static = k -> (k - 2.5) / 2.5 * SSz * 5
+B_gens_static = k -> [SSx, SSy]
+
+
 function odd_switch(x)
     if Bool(x%2)
         return ρfin
@@ -38,3 +44,8 @@ end
 
 X_init_gens = k -> ρinit
 X_target_gens = k -> odd_switch(k)
+
+
+
+X_init_gens_static = k -> ρinitS
+X_target_gens_static = k -> SMatrix{2,2,ComplexF64}(odd_switch(k))

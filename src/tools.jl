@@ -42,7 +42,7 @@ function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
         fom = 0.0
         gradient = zeros(n_ensemble, n_controls, n_timeslices)
     # end
-    return (states, costates, generators, propagators, fom, gradient)
+    return (states, costates, propagators, fom, gradient)
 end
 
 """

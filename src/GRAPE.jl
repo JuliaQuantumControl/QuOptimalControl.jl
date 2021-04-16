@@ -22,7 +22,7 @@ end
 """
 Evaluate the figure of merit and the gradient (updated in-place) for a given specification of the problem type problem.
 """
-function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, propagators, X_init, X_target, evolve_store, problem, n_ensemble) where T
+function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, propagators, X_init, X_target, evolve_store, problem) where T
 
     dt = duration / n_timeslices
 
@@ -47,7 +47,7 @@ function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration
 
     for c = 1:n_controls
         for t = 1:n_timeslices
-            @views gradient[n_ensemble, c, t] = grad_func!(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, evolve_store)
+            @views gradient[c, t] = grad_func!(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, evolve_store)
         end
     end
 

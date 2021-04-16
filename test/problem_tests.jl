@@ -2,7 +2,7 @@
 # tests for problems and ensemble problem types
 
 @testset "StateTransfer in place w/ GRAPE" begin
-    
+
 prob = StateTransferProblem(
     B = [Sx, Sy],
     A = Sz,
@@ -25,8 +25,8 @@ end
 prob = StateTransferProblem(
     B = [SSx, SSy],
     A = SSz,
-    X_init = ρinit,
-    X_target = ρfin,
+    X_init = ρinitS,
+    X_target = ρfinS,
     duration = 1.0,
     n_timeslices = 10,
     n_controls = 2,

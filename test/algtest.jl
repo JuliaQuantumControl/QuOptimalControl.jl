@@ -1,7 +1,7 @@
 
 prob = StateTransferProblem(
-    B = [Sx, Sy],
-    A = Sz,
+    B = [SSx, SSy],
+    A = SSz,
     X_init = ρinit,
     X_target = ρfin,
     duration = 1.0,
@@ -10,4 +10,4 @@ prob = StateTransferProblem(
     initial_guess = rand(2, 10)
 )
 
-sol = GRAPE(prob)
+sol = GRAPE(prob, inplace=false)

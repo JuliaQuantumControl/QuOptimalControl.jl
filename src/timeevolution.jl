@@ -1,6 +1,6 @@
 using LinearAlgebra
 using StaticArrays
-using exp
+using FastExpm
 """
 Contains code to perform time evolution
 """
@@ -23,7 +23,7 @@ function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timestep, t
 end
 
 """
-Given a set of Hamiltonians (drift and control) compute the evolution using exp for the matrix exponential. (For now we duplicate the code)
+Given a set of Hamiltonians (drift and control) compute the evolution using fastExpm for the matrix exponential. (For now we duplicate the code)
 """
 function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
     K = n_pulses
@@ -34,7 +34,7 @@ function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pul
         for j = 1:K
             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
         end
-        @views U = exp(-1.0im * timestep * Htot) * U
+        @views U = fastExpm(-1.0im * timestep * Htot) * U
     end
     U
 end
@@ -86,7 +86,7 @@ end
 #         for j = 1:n_pulses
 #             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
 #         end
-#         @views U = exp(-1.0im * timestep * Htot)# * U
+#         @views U = fastExpm(-1.0im * timestep * Htot)# * U
 #         out[i] = U
 #     end
 #     out
@@ -143,7 +143,7 @@ end
 
 
 """
-Compute the propagator using exp and save it in the array defined in out
+Compute the propagator using fastExpm and save it in the array defined in out
 """
 function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timeslices, timestep, out) where T
     K = n_pulses
@@ -154,6 +154,6 @@ function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timesli
         @inbounds for j = 1:K
             @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
         end
-        @views out[i] .= exp((-1.0im * timestep) .* (Htot .+ H₀))
+        @views out[i] .= fastExpm((-1.0im * timestep) .* (Htot .+ H₀))
     end
 end

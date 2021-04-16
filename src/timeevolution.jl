@@ -1,5 +1,6 @@
 using LinearAlgebra
 using StaticArrays
+using FastExpm
 """
 Contains code to perform time evolution
 """

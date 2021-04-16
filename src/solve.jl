@@ -32,12 +32,12 @@ This function solves the single problem using Optim and the gradient defined for
 function GRAPE!(problem, optim_options)
 
     # initialise holding arrays for inplace operations, these will be modified
-    state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
+    state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
 
     evolve_store = similar(state_store[1])
 
     function _to_optim!(F, G, x)
-        fom = _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient, state_store, costate_store, generators, propagators, problem.X_init, problem.X_target, evolve_store, problem, 1)
+        fom = _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient, state_store, costate_store, propagators, problem.X_init, problem.X_target, evolve_store, problem, 1)
 
         if G !== nothing
             @views G .= gradient[1,:,:]

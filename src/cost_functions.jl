@@ -8,11 +8,12 @@ Needs citation from the Schuster lab paper
 """
 
 """
-Target-gate infidelity
+Density matrix fidelity
 """
 function C1(KT, KN)
-    D = size(KT)[1]
-    1 - abs2(tr(KT' * KN) / D)
+    # D = size(KT)[1]
+    # 1 - abs2(tr(KT' * KN) / D)
+    1 - real(tr(KT' * KN))
 end
 
 """

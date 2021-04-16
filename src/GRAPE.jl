@@ -22,15 +22,18 @@ end
 """
 Evaluate the figure of merit and the gradient (updated in-place) for a given specification of the problem type problem.
 """
-function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem) where T
+function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem, n_ensemble) where T
 
     dt = duration / n_timeslices
 
     fwd_state_store[1] .= X_init
     bwd_costate_store[end] .= X_target
     # this seems really stupid since we dont ever use the generators again, we can just keep the propagators instead
-    pw_ham_save!(A, B, control_array, n_controls, n_timeslices, @view generators[:])
-    @views propagators[:] .= exp.(generators[:] .* (-1.0im * dt))
+    # pw_ham_save!(A, B, control_array, n_controls, n_timeslices, @view generators[:])
+    # @views propagators[:] .= exp.(generators[:] .* (-1.0im * dt))
+    pw_prop_save!(A, B, control_array, n_controls, n_timeslices, dt, propagators)
+    # function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out::Array{T, 1}) where T
+
 
     for t = 1:n_timeslices
         evolve_func!(problem, t, fwd_state_store, bwd_costate_store, propagators, generators, evolve_store, forward = true)
@@ -44,7 +47,7 @@ function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration
 
     for c = 1:n_controls
         for t = 1:n_timeslices
-            @views gradient[c, t] = grad_func!(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, generators, evolve_store)
+            @views gradient[n_ensemble, c, t] = grad_func!(problem, t, dt, B[c], fwd_state_store, bwd_costate_store, propagators, generators, evolve_store)
         end
     end
 

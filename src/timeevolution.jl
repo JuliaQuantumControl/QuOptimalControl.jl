@@ -7,7 +7,7 @@ Contains code to perform time evolution
 """
 Given a set of Hamiltonians (drift and control) compute the propagator for use with static arrays
 """
-function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T <: StaticMatrix
+function pw_evolve(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timestep, timeslices, U0::T)::T where T <: StaticMatrix
     K = n_pulses
     U = U0
     for i = 1:timeslices
@@ -61,7 +61,8 @@ end
 """
 Given a set of Hamiltonians compute the piecewise evolution saving the propagator for each time slice
 """
-function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timestep, timeslices) where T <: StaticMatrix
+#TODO maybe rewrite this so its not allocation out inside but we allocate it ourselves, make it a vector of static arrays?
+function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timestep, timeslices) where T <: StaticMatrix
     out = Vector{T}(undef, timeslices)
     for i = 1:timeslices
         # compute the propagator
@@ -90,21 +91,21 @@ end
 #     out
 # end
 
-
-"""
-Function to compute the Hamiltonians for a piecewise constant control and save them. Low allocations when used with StaticArrays!
-"""
-function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices) where T
-    out = Vector{T}(undef, timeslices)
-    for i = 1:timeslices
-        Htot = H₀
-        for j = 1:n_pulses
-            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
-        end
-        out[i] = Htot
-    end
-    out
-end
+#
+# """
+# Function to compute the Hamiltonians for a piecewise constant control and save them. Low allocations when used with StaticArrays!
+# """
+# function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices) where T
+#     out = Vector{T}(undef, timeslices)
+#     for i = 1:timeslices
+#         Htot = H₀
+#         for j = 1:n_pulses
+#             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+#         end
+#         out[i] = Htot
+#     end
+#     out
+# end
 
 """
 An almost allocation free (1 alloc in my tests) version of the Hamiltonian saver, since the update is inplace we have to be careful with the definition of out!
@@ -141,9 +142,9 @@ end
 
 
 """
-An almost allocation free (1 alloc in my tests) function to save the propagator
+Compute the propagator using fastExpm and save it in the array defined in out
 """
-function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out::Array{T, 1}) where T
+function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timeslices, timestep, out) where T
     K = n_pulses
     Htot = similar(H₀)
 
@@ -153,20 +154,5 @@ function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2},
             @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
         end
         @views out[i] .= fastExpm((-1.0im * timestep) .* (Htot .+ H₀))
-    end
-end
-
-
-function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out) where T <: StaticMatrix
-    K = n_pulses
-    Htot = similar(H₀)
-
-    @inbounds for i = 1:timeslices
-        Htot .= 0.0 .* Htot
-        @inbounds for j = 1:K
-            @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
-        end
-        @show typeof(Htot .+ H₀)
-        @views out[i] .= exp((-1.0im * timestep) .* (Htot .+ H₀))
     end
 end

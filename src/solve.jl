@@ -30,17 +30,17 @@ GRAPE!
 This function solves the single problem using Optim and the gradient defined for the problem type.
 """
 function GRAPE!(problem, optim_options)
-    
+
     # initialise holding arrays for inplace operations, these will be modified
     state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
-    
+
     evolve_store = similar(state_store[1])
 
-    function _to_optim!(F, G, x)        
-        fom = @views _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient, state_store, costate_store, generators, propagators, problem.X_init, problem.X_target, evolve_store, problem)
+    function _to_optim!(F, G, x)
+        fom = _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient, state_store, costate_store, generators, propagators, problem.X_init, problem.X_target, evolve_store, problem, 1)
 
         if G !== nothing
-            @views G .= gradient
+            @views G .= gradient[1,:,:]
         end
         if F !== nothing
             return fom
@@ -69,7 +69,7 @@ function sGRAPE(problem, optim_options)
     function _to_optim!(F, G, x)
         grad = @views gradient[:, :]
         fom = _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem)
-        
+
         if G !== nothing
             @views G .= grad
         end
@@ -95,12 +95,12 @@ This function solves the ensemble problem defined in ensemble_problem using the 
 function ensemble_GRAPE!(ensemble_problem, optim_options)
     # we expand the ensemble problem into an array of single problems that we can solve
     ensemble_problem_array = init_ensemble(ensemble_problem)
-    
+
     # to initialise the holding arrays we define a problem
     problem = ensemble_problem_array[1]
     # initialise holding arrays for inplace operations, these will be modified
     state_store, costate_store, generators, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, ensemble_problem.n_ensemble, problem.A, problem.n_controls)
-    
+
     evolve_store = similar(state_store[1])
     weights = ensemble_problem.weights
     n_ensemble = ensemble_problem.n_ensemble
@@ -109,10 +109,10 @@ function ensemble_GRAPE!(ensemble_problem, optim_options)
         fom = 0.0
         for k = 1:n_ensemble
             problem = ensemble_problem_array[k]
-            
+
             fom += @views _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], generators[:,k], propagators[:,k], problem.X_init, problem.X_target, evolve_store, problem) * weights[k]
         end
-        
+
         if G !== nothing
             @views G .= sum(gradient .* weights, dims = 1)[1,:,:]
         end
@@ -142,7 +142,7 @@ function ensemble_sGRAPE(ensemble_problem, optim_options)
 
     Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
     Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
-    
+
     gradient = zeros(ensemble_problem.n_ensemble, problem.n_controls, problem.n_timeslices)
 
     n_ensemble = ensemble_problem.n_ensemble
@@ -153,9 +153,9 @@ function ensemble_sGRAPE(ensemble_problem, optim_options)
             for k = 1:n_ensemble
                 problem = ensemble_problem_array[k]
                 grad = @views gradient[k, :, :]
-                
+
                 fom += _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem) * weights[k]
-            
+
             if G !== nothing
                 @views G .= sum(gradient .* weights, dims = 1)[1,:,:]
             end
@@ -183,7 +183,7 @@ function ADGRAPE(prob::StateTransferProblem; optim_options = Optim.Options())
     wts = ones(prob.n_ensemble)
     D = size(prob.A[1])[1]
     u0 = typeof(prob.A[1])(I(D))
-    
+
     function user_functional(x)
         fom = 0.0
         for k = 1:prob.n_ensemble
@@ -220,4 +220,3 @@ function ADGRAPE(prob::UnitaryProblem; optim_options = Optim.Options())
 
     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 end
-

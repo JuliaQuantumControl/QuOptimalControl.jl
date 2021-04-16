@@ -113,7 +113,7 @@ An almost allocation free (1 alloc in my tests) version of the Hamiltonian saver
 """
 function pw_ham_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, out) where T
     K = n_pulses
-    Htot = similar(H₀)
+    Htot = similar(H₀) .* 0.0
 
     @views @inbounds for i = 1:timeslices
         Htot .= 0.0 .* Htot
@@ -129,7 +129,7 @@ An almost allocation free (1 alloc in my tests) version of the Generator saving 
 """
 function pw_gen_save!(prob::Union{StateTransferProblem,UnitaryProblem}, H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, duration, out) where T
     K = n_pulses
-    Htot = similar(H₀)
+    Htot = similar(H₀) .* 0.0
     dt = duration/timeslices
 
     @views @inbounds for i = 1:timeslices
@@ -147,7 +147,7 @@ Compute the propagator using fastExpm and save it in the array defined in out
 """
 function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timeslices, timestep, out) where T
     K = n_pulses
-    Htot = similar(H₀)
+    Htot = similar(H₀) .* 0.0
 
     @inbounds for i = 1:timeslices
         Htot .= 0.0 .* Htot

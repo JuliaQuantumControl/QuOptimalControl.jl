@@ -5,7 +5,6 @@ abstract type Solution end
 
 using BSON
 using DelimitedFiles
-using Setfield
 using StaticArrays
 
 #const σₓ = SMatrix{} # etc

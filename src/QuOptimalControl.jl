@@ -1,9 +1,10 @@
 module QuOptimalControl
 
+
 include("problems.jl")
-include("grape_tools.jl")
 include("cost_functions.jl")
 include("tools.jl")
+include("grape_tools.jl")
 include("timeevolution.jl")
 include("algorithms.jl")
 include("dCRAB.jl")

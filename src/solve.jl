@@ -115,6 +115,7 @@ function ensemble_GRAPE!(ensemble_problem, optim_options)
         end
 
         if G !== nothing
+            # TODO is this performant?
             @views G .= sum(gradient .* weights, dims = 1)[1,:,:]
         end
         if F !== nothing

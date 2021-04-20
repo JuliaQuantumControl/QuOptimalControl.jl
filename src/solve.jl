@@ -34,7 +34,7 @@ function GRAPE!(problem, optim_options)
     # initialise holding arrays for inplace operations, these will be modified
     state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
 
-    evolve_store = similar(state_store[1])
+    evolve_store = similar(state_store[1]) .* 0.0
     grad = @views gradient[1,:,:]
 
     function _to_optim!(F, G, x)

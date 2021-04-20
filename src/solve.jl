@@ -102,7 +102,7 @@ function ensemble_GRAPE!(ensemble_problem, optim_options)
     # initialise holding arrays for inplace operations, these will be modified
     state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, ensemble_problem.n_ensemble, problem.A, problem.n_controls)
 
-    evolve_store = similar(state_store[1])
+    evolve_store = similar(state_store[1]) .* 0.0
     weights = ensemble_problem.weights
     n_ensemble = ensemble_problem.n_ensemble
 

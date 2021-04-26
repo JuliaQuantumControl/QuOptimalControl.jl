@@ -154,6 +154,6 @@ function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timesli
         @inbounds for j = 1:K
             @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
         end
-        @views out[i] .= fastExpm((-1.0im * timestep) .* (Htot .+ H₀))
+        @views out[i] .= exp((-1.0im * timestep) .* (Htot .+ H₀))
     end
 end

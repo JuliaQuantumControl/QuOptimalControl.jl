@@ -187,37 +187,6 @@ toptclosure = ensemble_GRAPE!closure(ensemble_problem, 1.0)
 
 
 
-
-
-function abmult(r::Int)
-    if r < 0
-        r = -r
-    end
-    f = @closure x -> x * r
-    return f
-end
-
-
-
-@code_warntype abmult(2)
-
-function test(r)
-    if r < 0
-        k = -r
-    else
-        k = r
-    end
-    function f(x)
-        x * k
-    end
-    f    
-end
-
-@code_warntype test(2)
-
-
-
-
 function GRAPEfix!(problem, optim_options)
     
     # initialise holding arrays for inplace operations, these will be modified

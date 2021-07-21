@@ -151,7 +151,7 @@ _fom_and_gradient_GRAPE_unchanged(prob.A, prob.B, x, prob.n_timeslices, prob.dur
 @code_warntype _fom_and_gradient_GRAPE_updated(prob.A, prob.B, x, prob.n_timeslices, prob.duration, prob.n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], generators[:,k], propagators[:,k], prob.X_init, prob.X_target, evolve_store, prob)
 
 
-
+@benchmark @views _fom_and_gradient_GRAPE_updated($prob.A, $prob.B, $x, $prob.n_timeslices, $prob.duration, $prob.n_controls, $gradient[k, :, :], $state_store[:, k], $costate_store[:, k], $generators[:,k], $propagators[:,k], $prob.X_init, $prob.X_target, $evolve_store, $prob)
 
 function _fom_and_gradient_GRAPE_updated(A::T, B, control_array, n_timeslices, duration, n_controls, gradient, fwd_state_store, bwd_costate_store, generators, propagators, X_init, X_target, evolve_store, problem) where T
     

@@ -154,18 +154,21 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
         end
     else
             
-        Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
-        Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+        Ut = Vector{typeof(problem.A)}(undef, n_slices + 1)
+        Lt = Vector{typeof(problem.A)}(undef, n_slices + 1)
 
-        gradient = zeros(ensemble_problem.n_ensemble, problem.n_controls, problem.n_timeslices)
+        gradient = zeros(ensemble_problem.n_ensemble, problem.n_controls, n_slices)
 
         topt = function(F,G,x)
             fom = 0.0
                 for k = 1:n_ensemble
                     problem = ensemble_problem_array[k]
+
+                    @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = problem
+
                     grad = @views gradient[k, :, :]
     
-                    fom += _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem) * weights[k]
+                    fom += _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type) * weights[k]
     
                 if G !== nothing
                     @views G .= sum(gradient .* weights, dims = 1)[1,:,:]

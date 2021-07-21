@@ -166,7 +166,7 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
         Ut = Vector{typeof(problem.A)}(undef, n_slices + 1)
         Lt = Vector{typeof(problem.A)}(undef, n_slices + 1)
 
-        gradient = zeros(ensemble_problem.n_ensemble, problem.n_controls, n_slices)
+        gradient = zeros(ens_prob.n_ensemble, problem.n_controls, n_slices)
 
         topt = function(F,G,x)
             fom = 0.0

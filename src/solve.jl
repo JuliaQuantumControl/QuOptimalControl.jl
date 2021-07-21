@@ -127,7 +127,7 @@ function solve(prob::Problem, alg::GRAPE)
 end
 
 function solve(ens_prob::EnsembleProblem, alg::GRAPE)
-    @unpack problem, n_ensemble, A_generators, B_generators, X_init_generators, X_target_generators, weights = ens_prob
+    @unpack prob, n_ens, A_g, B_g, XiG, XtG, wts = ens_prob
     @unpack n_slices, isinplace, optim_options = alg
 
     ensemble_problem_array = init_ensemble(ens_prob)

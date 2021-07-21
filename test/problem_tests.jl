@@ -54,13 +54,13 @@ end
 
 
     ens = EnsembleProblem(
-        problem = prob,
-        n_ensemble = 5,
-        A_generators = A_gens,
-        B_generators = B_gens,
-        X_init_generators = X_init_gens,
-        X_target_generators = X_target_gens,
-        weights = ones(5) / 5,
+        prob = prob,
+        n_ens = 5,
+        A_g = A_gens,
+        B_g = B_gens,
+        XiG = X_init_gens,
+        XtG = X_target_gens,
+        wts = ones(5) / 5,
     )
 
     sol = solve(ens, GRAPE(n_slices = 25, isinplace = true))
@@ -85,13 +85,13 @@ end
 
 
     ens = EnsembleProblem(
-        problem = prob,
-        n_ensemble = 5,
-        A_generators = A_gens_static,
-        B_generators = B_gens_static,
-        X_init_generators = X_init_gens_static,
-        X_target_generators = X_target_gens_static,
-        weights = ones(5) / 5,
+        prob = prob,
+        n_ens = 5,
+        A_g = A_gens_static,
+        B_g = B_gens_static,
+        XiG = X_init_gens_static,
+        XtG = X_target_gens_static,
+        wts = ones(5) / 5,
     )
 
     sol = solve(ens, GRAPE(n_slices = 25, isinplace = false))

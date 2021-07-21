@@ -10,7 +10,16 @@ Using the dCRAB method to perform optimisation of a pulse.
 
 The user here must provide a functional that we will optimise, optimisation is carried out here
 """
-function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, initial_guess, user_func)
+function dCRAB(
+    n_pulses,
+    dt,
+    timeslices,
+    duration,
+    n_freq,
+    n_coeff,
+    initial_guess,
+    user_func,
+)
 
     # lets set up an ansatz that will currently be for Fourier series
     # lets also refactor our ansatz
@@ -30,7 +39,7 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, initial_gues
     pulses = initial_guess # lets think about this a bit, it should be a list of pulses
     # pulses = [initial_guess[:, i] for i = 1:n_pulses] # something like this maybe?
 
-    pulse_time = 0:dt:duration - dt
+    pulse_time = 0:dt:duration-dt
 
     # functions for computing indices because I find them hard
     first(j) = (j - 1) * n_coeff + 1
@@ -47,15 +56,30 @@ function dCRAB(n_pulses, dt, timeslices, duration, n_freq, n_coeff, initial_gues
             copy_pulses = copy(pulses)
 
             # I find getting indices hard, want to divide up the array x into n_coeff chunks
-            [copy_pulses[j] += reshape(ansatz.((x[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+            [
+                copy_pulses[j] += reshape(
+                    ansatz.((x[first(j):second(j)],), freqs[j], pulse_time),
+                    (1, timeslices),
+                ) for j = 1:n_pulses
+            ]
             user_func(vcat(copy_pulses...))
         end
 
         # now optimise with nelder mead
-        result = Optim.optimize(to_minimize, reshape(init_coeffs[i, :, :], 4), Optim.NelderMead(), Optim.Options(show_trace = true, allow_f_increases = false))
+        result = Optim.optimize(
+            to_minimize,
+            reshape(init_coeffs[i, :, :], 4),
+            Optim.NelderMead(),
+            Optim.Options(show_trace = true, allow_f_increases = false),
+        )
 
         # update the pulses, save the coefficients
-        [pulses[j] += reshape(ansatz.((result.minimizer[first(j):second(j)],), freqs[j], pulse_time), (1, timeslices)) for j = 1:n_pulses]
+        [
+            pulses[j] += reshape(
+                ansatz.((result.minimizer[first(j):second(j)],), freqs[j], pulse_time),
+                (1, timeslices),
+            ) for j = 1:n_pulses
+        ]
 
         # depending on the fidelity we should break here
         append!(optimised_coeffs, [result.minimizer])
@@ -153,5 +177,3 @@ end
 #     end
 #     sol
 # end
-
-

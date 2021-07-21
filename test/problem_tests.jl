@@ -11,14 +11,13 @@
         T = 1.0,
         n_controls = 2,
         guess = rand(2, 10),
-        sys_type = StateTransfer()
-
+        sys_type = StateTransfer(),
     )
 
-    sol = solve(prob, GRAPE(n_slices = 10, isinplace=true))
+    sol = solve(prob, GRAPE(n_slices = 10, isinplace = true))
 
     @test sol.result.minimum - C1(ρfin, ρfin) < tol
-    end
+end
 
 @testset "StateTransfer GRAPE" begin
 
@@ -30,10 +29,10 @@
         T = 1.0,
         n_controls = 2,
         guess = rand(2, 10),
-        sys_type = StateTransfer()
+        sys_type = StateTransfer(),
     )
 
-    sol = solve(prob, GRAPE(n_slices=10, isinplace=false))
+    sol = solve(prob, GRAPE(n_slices = 10, isinplace = false))
     @test sol.result.minimum - C1(ρfin, ρfin) < tol
 
 end
@@ -50,13 +49,21 @@ end
         duration = 5.0,
         n_timeslices = 25,
         n_controls = 2,
-        initial_guess = rand(2, 25)
+        initial_guess = rand(2, 25),
     )
 
 
-    ens = ClosedEnsembleProblem(prob, 5, A_gens, B_gens, X_init_gens, X_target_gens, ones(5)/5)
+    ens = ClosedEnsembleProblem(
+        prob,
+        5,
+        A_gens,
+        B_gens,
+        X_init_gens,
+        X_target_gens,
+        ones(5) / 5,
+    )
 
-    sol = GRAPE(ens, inplace=true)
+    sol = GRAPE(ens, inplace = true)
     @test sol.result[1].minimum - C1(ρfin, ρfin) < tol * 10
 
 end
@@ -72,13 +79,21 @@ end
         duration = 5.0,
         n_timeslices = 25,
         n_controls = 2,
-        initial_guess = rand(2, 25)
+        initial_guess = rand(2, 25),
     )
 
 
-    ens = ClosedEnsembleProblem(prob, 5, A_gens_static, B_gens_static, X_init_gens_static, X_target_gens_static, ones(5)/5)
+    ens = ClosedEnsembleProblem(
+        prob,
+        5,
+        A_gens_static,
+        B_gens_static,
+        X_init_gens_static,
+        X_target_gens_static,
+        ones(5) / 5,
+    )
 
-    sol = GRAPE(ens, inplace=false)
+    sol = GRAPE(ens, inplace = false)
     @test sol.result[1].minimum - C1(ρfin, ρfin) < tol * 10
 
 end

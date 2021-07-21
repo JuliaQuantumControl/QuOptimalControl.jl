@@ -11,7 +11,7 @@ Solution type -
 
 The SolutionResult stores important optimisation information in a nice format
 """
-struct SolutionResult{R, FID, OPT, P <: Problem, A}
+struct SolutionResult{R,FID,OPT,P<:Problem,A}
     result::R
     fidelity::FID
     opti_pulses::OPT
@@ -21,7 +21,7 @@ end
 
 
 
-Base.@kwdef struct GRAPE{NS, iip, opts}
+Base.@kwdef struct GRAPE{NS,iip,opts}
     n_slices::NS = 1
     isinplace::iip = true
     optim_options::opts = Optim.Options()
@@ -42,40 +42,71 @@ function solve(prob::Problem, alg::GRAPE)
     @show isinplace
 
     if isinplace
-        state_store, costate_store, propagators, fom, gradient = init_GRAPE(Xi, n_slices, 1, A, n_controls)
+        state_store, costate_store, propagators, fom, gradient =
+            init_GRAPE(Xi, n_slices, 1, A, n_controls)
 
         evolve_store = similar(state_store[1]) .* 0.0
-        grad = @views gradient[1,:,:]
+        grad = @views gradient[1, :, :]
 
-        topt = (F, G, x) -> begin
-            fom = _fom_and_gradient_GRAPE!(A, B, x, n_slices, T, n_controls, grad, state_store, costate_store, propagators, Xi, Xt, evolve_store, sys_type)
-    
-            if G !== nothing
-                @views G .= grad
+        topt =
+            (F, G, x) -> begin
+                fom = _fom_and_gradient_GRAPE!(
+                    A,
+                    B,
+                    x,
+                    n_slices,
+                    T,
+                    n_controls,
+                    grad,
+                    state_store,
+                    costate_store,
+                    propagators,
+                    Xi,
+                    Xt,
+                    evolve_store,
+                    sys_type,
+                )
+
+                if G !== nothing
+                    @views G .= grad
+                end
+                if F !== nothing
+                    return fom
+                end
             end
-            if F !== nothing
-                return fom
-            end
-        end
-    
-        
+
+
     else
         # we could move this into another function
         Ut = Vector{typeof(A)}(undef, n_slices + 1)
         Lt = Vector{typeof(A)}(undef, n_slices + 1)
         gradient = zeros(n_controls, n_slices)
 
-        topt = (F,G,x) -> begin
-            grad = @views gradient[:, :]
-            fom = _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type)
+        topt =
+            (F, G, x) -> begin
+                grad = @views gradient[:, :]
+                fom = _fom_and_gradient_sGRAPE(
+                    A,
+                    B,
+                    x,
+                    n_slices,
+                    T,
+                    n_controls,
+                    grad,
+                    Ut,
+                    Lt,
+                    Xi,
+                    Xt,
+                    sys_type,
+                )
 
-            if G !== nothing
-                @views G .= grad
+                if G !== nothing
+                    @views G .= grad
+                end
+                if F !== nothing
+                    return fom
+                end
             end
-            if F !== nothing
-                return fom
-            end
-        end
 
     end
 

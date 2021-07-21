@@ -24,11 +24,7 @@ export pw_evolve,
     pw_gen_save!,
     evolve_func,
     evolve_func!
-export algorithm,
-    gradientBased,
-    gradientFree,
-    SolutionResult,
-    GRAPE
+export algorithm, gradientBased, gradientFree, SolutionResult, GRAPE
 export solve
 export grad_func
 export Problem,

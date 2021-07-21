@@ -64,8 +64,8 @@ end
 Stores information, relative weights and functions to compute the penalty functions
 """
 struct PenaltyFunctionals
-    weights # relative weights of each
-    functions # array of penalty functionals
+    weights::Any # relative weights of each
+    functions::Any # array of penalty functionals
 end
 
 
@@ -83,7 +83,14 @@ function fom_func(system_type::UnitaryGate, t, k, state, costate, props)::Float6
     @views tr(costate[t, k]' * state[t, k]) * tr(state[t, k]' * costate[t, k])
 end
 
-function fom_func(system_type::Union{StateTransfer,CoherenceTransfer}, t, k, state, costate, props)::Float64
+function fom_func(
+    system_type::Union{StateTransfer,CoherenceTransfer},
+    t,
+    k,
+    state,
+    costate,
+    props,
+)::Float64
     # recall that target is always the last entry of L
     # and that we have in U[end] the propagated forward target state
     @views C1(costate[t, k], state[t, k])
@@ -93,6 +100,12 @@ function fom_func(system_type::UnitaryGate, t, state, costate, props)::Float64
     @views tr(state[t]' * costate[t]) * tr(state[t]' * costate[t])
 end
 
-function fom_func(system_type::Union{StateTransfer,CoherenceTransfer}, t, state, costate, props)::Float64
+function fom_func(
+    system_type::Union{StateTransfer,CoherenceTransfer},
+    t,
+    state,
+    costate,
+    props,
+)::Float64
     @views C1(costate[t], state[t])
 end

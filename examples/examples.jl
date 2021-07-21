@@ -20,7 +20,7 @@ prob = ClosedStateTransfer(
     n_ensemble = 1,
     norm2 = 1.0,
     alg = GRAPE_approx(inplace = true),
-    initial_guess = rand(2, 10)
+    initial_guess = rand(2, 10),
 )
 
 sol = solve(prob)
@@ -36,7 +36,7 @@ prob = ClosedStateTransfer(
     n_ensemble = 1,
     norm2 = 1,
     alg = GRAPE_AD(),
-    initial_guess = rand(2, 10)
+    initial_guess = rand(2, 10),
 )
 
 sol = solve(prob)
@@ -52,7 +52,7 @@ prob_dCRAB = ClosedStateTransfer(
     n_ensemble = 1,
     norm2 = 1.0,
     alg = dCRAB_options(),
-    initial_guess = rand(2,10)
+    initial_guess = rand(2, 10),
 )
 
 

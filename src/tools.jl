@@ -58,7 +58,12 @@ Load a SolutionResult from file
 """
 function load(file_path)
     solres_dict = BSON.load(file_path)
-    sol = SolutionResult(nothing, solres_dict[:fidelity], solres_dict[:problem_info], solres_dict[:optimised_pulses])
+    sol = SolutionResult(
+        nothing,
+        solres_dict[:fidelity],
+        solres_dict[:problem_info],
+        solres_dict[:optimised_pulses],
+    )
 end
 
 """
@@ -112,7 +117,7 @@ end
 """
 Function to compute the matrix exponential using the eigenvalue decomposition of the matrix, this is slower than exp if your matrix can be a StaticArray
 """
-function expm_exact_gradient(H::T, dt)::T where T
+function expm_exact_gradient(H::T, dt)::T where {T}
     dt_H = dt * H
     v, zeta, exp_d = eig_factors(dt_H, antihermitian = true)
 

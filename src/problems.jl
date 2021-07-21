@@ -15,7 +15,7 @@ import Base.@kwdef # unsure about using this so much
 
 # could do something like this
 # and then we do the dispatch on the system type rather than the problem itself
-@kwdef struct Problem{BT, AT, XT, TT, NC, IG, ST}
+@kwdef struct Problem{BT,AT,XT,TT,NC,IG,ST}
     B::BT # control terms
     A::AT # drift terms
     Xi::XT # initial state
@@ -88,7 +88,7 @@ Following the Khaneja and Glaser paper provided we can use the same gradient and
 """
 Working with an experiment
 """
-@kwdef struct ExperimentInterface{T, TS, NC, FS, PP, IP, TO} <: Experiment
+@kwdef struct ExperimentInterface{T,TS,NC,FS,PP,IP,TO} <: Experiment
     duration::T
     timestep::TS
     n_controls::NC

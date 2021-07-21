@@ -31,7 +31,9 @@ function _fom_and_gradient_GRAPE!(A::T, B, control_array, n_timeslices, duration
     # this seems really stupid since we dont ever use the generators again, we can just keep the propagators instead
     # pw_ham_save!(A, B, control_array, n_controls, n_timeslices, @view generators[:])
     # @views propagators[:] .= exp.(generators[:] .* (-1.0im * dt))
-    propagators[:] .= pw_evolve_save_new(A, B, control_array, n_controls, dt, n_timeslices)
+    pw_prop_save!(A, B, control_array, n_controls, n_timeslices, dt, propagators)
+    # function pw_prop_save!(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, timestep, out::Array{T, 1}) where T
+
 
     for t = 1:n_timeslices
         evolve_func!(system_type, t, fwd_state_store, bwd_costate_store, propagators, evolve_store, forward = true)

@@ -3,38 +3,38 @@
 
 @testset "StateTransfer in place w/ GRAPE" begin
 
-prob = StateTransferProblem(
+prob = Problem(
     B = [Sx, Sy],
     A = Sz,
-    X_init = ρinit,
-    X_target = ρfin,
-    duration = 1.0,
-    n_timeslices = 10,
+    Xi = ρinit,
+    Xt = ρfin,
+    T = 1.0,
     n_controls = 2,
-    initial_guess = rand(2, 10)
+    guess = rand(2, 10),
+    sys_type = StateTransfer()
+
 )
 
-sol = GRAPE(prob)
-@test sol.result[1].minimum - C1(ρfin, ρfin) < tol
+sol = solve(prob, GRAPE(n_slices = 10, isinplace=true))
 
+@test sol.result.minimum - C1(ρfin, ρfin) < tol
 end
-
 
 @testset "StateTransfer GRAPE" begin
 
-prob = StateTransferProblem(
+prob = Problem(
     B = [SSx, SSy],
     A = SSz,
-    X_init = ρinitS,
-    X_target = ρfinS,
-    duration = 1.0,
-    n_timeslices = 10,
+    Xi = ρinit,
+    Xt = ρfin,
+    T = 1.0,
     n_controls = 2,
-    initial_guess = rand(2, 10)
+    guess = rand(2, 10),
+    sys_type = StateTransfer()
 )
 
-sol = GRAPE(prob, inplace=false)
-@test sol.result[1].minimum - C1(ρfin, ρfin) < tol
+sol = solve(prob, GRAPE(n_slices=10, isinplace=false))
+@test sol.result.minimum - C1(ρfin, ρfin) < tol
 
 end
 

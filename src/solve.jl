@@ -22,9 +22,9 @@ end
 
 
 Base.@kwdef struct GRAPE{NS, iip, opts}
-    n_slices::NS
-    isinplace::iip
-    optim_options::opts
+    n_slices::NS = 1
+    isinplace::iip = true
+    optim_options::opts = Optim.Options()
 end
 
 # Base.@kwdef struct dCRAB end
@@ -33,24 +33,39 @@ end
 default_algorithm(::Problem) = GRAPE()
 
 
-solve(prob::Problem) = solve(prob, default_algorithm(prob))
+solve(prob::Problem) = solve(prob, default_algorithm())
 
 
 function solve(prob::Problem, alg::GRAPE)
     @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
-    @unpack n_slices, iip, optim_options = alg
+    @unpack n_slices, isinplace, optim_options = alg
+    @show isinplace
 
-    if iip
-        @show "not yet son"
+    if isinplace
+        state_store, costate_store, propagators, fom, gradient = init_GRAPE(Xi, n_slices, 1, A, n_controls)
+
+        evolve_store = similar(state_store[1]) .* 0.0
+        grad = @views gradient[1,:,:]
+
+        topt = (F, G, x) -> begin
+            fom = _fom_and_gradient_GRAPE!(A, B, x, n_slices, T, n_controls, grad, state_store, costate_store, propagators, Xi, Xt, evolve_store, sys_type)
+    
+            if G !== nothing
+                @views G .= grad
+            end
+            if F !== nothing
+                return fom
+            end
+        end
+    
+        
     else
         # we could move this into another function
-        @show "im here now"
-        
-        Ut = Vector{typeof(problem.A)}(undef, n_slices + 1)
-        Lt = Vector{typeof(problem.A)}(undef, n_slices + 1)
+        Ut = Vector{typeof(A)}(undef, n_slices + 1)
+        Lt = Vector{typeof(A)}(undef, n_slices + 1)
         gradient = zeros(n_controls, n_slices)
 
-        function _to_optim!(F, G, x)
+        topt = (F,G,x) -> begin
             grad = @views gradient[:, :]
             fom = _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type)
 
@@ -62,46 +77,19 @@ function solve(prob::Problem, alg::GRAPE)
             end
         end
 
-        init = guess
-        res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
-        sol = SolutionResult(res, res.minimizer, res.minimum, problem, alg)
-
-        return sol
-
     end
+
+    init = guess
+    res = Optim.optimize(Optim.only_fg!(topt), init, Optim.LBFGS(), optim_options)
+    sol = SolutionResult(res, res.minimum, res.minimizer, prob, alg)
+
+    return sol
 
 end
 
 
-function sGRAPE(problem, optim_options)
-    # prepare some storage arrays that we will make use of throughout the computation
-    Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
-    Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
-    gradient = zeros(problem.n_controls, problem.n_timeslices)
 
-    function _to_optim!(F, G, x)
-        grad = @views gradient[:, :]
-        fom = _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem)
-
-        if G !== nothing
-            @views G .= grad
-        end
-        if F !== nothing
-            return fom
-        end
-    end
-
-    init = problem.initial_guess
-
-    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
-
-    return solres
-end
-    
-
-
-
+println("stop")
 
 
 # """
@@ -131,33 +119,7 @@ end
 
 # This function solves the single problem using Optim and the gradient defined for the problem type.
 # """
-# function GRAPE!(problem, optim_options)
-
-#     # initialise holding arrays for inplace operations, these will be modified
-#     state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.X_init, problem.n_timeslices, 1, problem.A, problem.n_controls)
-
-#     evolve_store = similar(state_store[1]) .* 0.0
-#     grad = @views gradient[1,:,:]
-
-#     function _to_optim!(F, G, x)
-#         fom = _fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, state_store, costate_store, propagators, problem.X_init, problem.X_target, evolve_store, problem)
-
-#         if G !== nothing
-#             @views G .= grad
-#         end
-#         if F !== nothing
-#             return fom
-#         end
-#     end
-
-
-#     init = problem.initial_guess
-
-#     res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
-#     solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
-#     return solres
-# end
-
+# 
 # """
 # sGRAPE
 

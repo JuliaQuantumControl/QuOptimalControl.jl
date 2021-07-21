@@ -1,23 +1,30 @@
 abstract type SystemType end
+# what should these be? I want to dispatch on them but never create them
+# so maybe abstract type is fine?
 abstract type ClosedSystem <: SystemType end
 abstract type OpenSystem <: SystemType end
-abstract type Experiment <: SystemType end
+
+struct StateTransfer <: ClosedSystem end
+struct UnitaryGate <: ClosedSystem end
+struct CoherenceTransfer <: OpenSystem end
+
+struct Experiment <: SystemType end
 
 import Base.@kwdef # unsure about using this so much
 
 
 # could do something like this
 # and then we do the dispatch on the system type rather than the problem itself
-@kwdef struct Problem{BT, AT, XT, T, NC, IG, ST}
-    B_control::BT # control terms
-    A_drift::AT # drift terms
-    X_init::XT # initial state
-    X_target::XT # target operator or state
-    duration::T # duration of pulse
+@kwdef struct Problem{BT, AT, XT, TT, NC, IG, ST}
+    B::BT # control terms
+    A::AT # drift terms
+    Xi::XT # initial state
+    Xt::XT # target operator or state
+    T::TT # duration of pulse
     # n_timeslices::NS # slices
     n_controls::NC # number of pulses
-    initial_guess::IG # guess at controls
-    system_type::ST
+    guess::IG # guess at controls
+    sys_type::ST
 end
 
 # """

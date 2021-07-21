@@ -62,7 +62,7 @@ end
 Given a set of Hamiltonians compute the piecewise evolution saving the propagator for each time slice
 """
 #TODO maybe rewrite this so its not allocation out inside but we allocate it ourselves, make it a vector of static arrays?
-function pw_evolve_save(H₀::T, Hₓ_array::Array{T,1}, x_arr, n_pulses, timestep, timeslices) where T <: StaticMatrix
+function pw_evolve_save(H₀::T, Hₓ_array, x_arr, n_pulses, timestep, timeslices) where T <: StaticMatrix
     out = Vector{T}(undef, timeslices)
     for i = 1:timeslices
         # compute the propagator
@@ -126,7 +126,7 @@ end
 """
 An almost allocation free (1 alloc in my tests) version of the Generator saving function, this saves the generators of propagators (implementation might differ for prob)
 """
-function pw_gen_save!(prob::Union{StateTransferProblem,UnitaryProblem}, H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timeslices, duration, out) where T
+function pw_gen_save!(H₀, Hₓ_array, x_arr, n_pulses, timeslices, duration, out)
     K = n_pulses
     Htot = similar(H₀) .* 0.0
     dt = duration/timeslices

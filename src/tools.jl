@@ -1,7 +1,7 @@
 """
 Just some useful functions
 """
-abstract type Solution end
+
 
 using BSON
 using DelimitedFiles
@@ -26,15 +26,13 @@ function commutator!(A, B, store)
 end
 
 
-"""
-The SolutionResult stores important optimisation information in a nice format
-"""
-struct SolutionResult <: Solution
-    result # optimisation result (not saved)
-    fidelity # lets just extract the figure of merit that was reached
-    optimised_pulses # store an array of the optimised pulses
-    prob_info # can we store the struct or some BSON of the struct that was originally used
-end
+
+# struct SolutionResult <: Solution
+#     result # optimisation result (not saved)
+#     fidelity # lets just extract the figure of merit that was reached
+#     optimised_pulses # store an array of the optimised pulses
+#     prob_info # can we store the struct or some BSON of the struct that was originally used
+# end
 
 
 """

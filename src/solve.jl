@@ -2,12 +2,32 @@ using Optim
 using FileWatching
 using DelimitedFiles
 
+# what is this
+abstract type Solution end
+
+"""
+Solution type - 
+
+The SolutionResult stores important optimisation information in a nice format
+"""
+struct SolutionResult{R, FID, OPT, P <: Problem, A}
+    result::R
+    fidelity::FID
+    opti_pulses::OPT
+    problem::P
+    alg::A
+end
 
 
 
+Base.@kwdef struct GRAPE end
+Base.@kwdef struct dCRAB end
+Base.@kwdef struct ADGRAPE end
+Base.@kwdef struct ADGROUP end
+default_algorithm(::Problem) = GRAPE()
 
 
-
+solve(prob::Problem) = solve(prob, default_algorithm(prob))
 
 
 
@@ -238,3 +258,4 @@ using DelimitedFiles
 
 # #     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
 # # end
+

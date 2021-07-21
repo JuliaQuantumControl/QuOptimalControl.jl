@@ -34,6 +34,7 @@ export Problem,
     StateTransfer,
     UnitaryGate,
     CoherenceTransfer,
+    EnsembleProblem,
     Experiment,
     ExperimentInterface
 export visualise_expt_val, visualise_pulse

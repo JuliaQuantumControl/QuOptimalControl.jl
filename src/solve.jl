@@ -39,7 +39,6 @@ solve(prob::Problem) = solve(prob, default_algorithm())
 function solve(prob::Problem, alg::GRAPE)
     @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
     @unpack n_slices, isinplace, optim_options = alg
-    @show isinplace
 
     if isinplace
         state_store, costate_store, propagators, fom, gradient =

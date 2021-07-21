@@ -55,18 +55,18 @@ end
 #     initial_guess::IG # guess at controls
 # end
 
-# """
-# Define an ensemble of problems, can provide any method for computing the new drift or control Hamiltonians
-# """
-# @kwdef struct ClosedEnsembleProblem{T, NE, AG, BG, XIG, XTG, WTS}
-#     problem::T # for an ensemble of systems you'll provide one "template" problem
-#     n_ensemble::NE # we need to know the number of ensemble members
-#     A_generators::AG # need to find a better name but these will give us some discretisation
-#     B_generators::BG # similarly to above
-#     X_init_generators::XIG
-#     X_target_generators::XTG
-#     weights::WTS # weights for calculating the figure of merit and gradient
-# end
+"""
+Define an ensemble of problems, can provide any method for computing the new drift or control Hamiltonians
+"""
+@kwdef struct EnsembleProblem{T, NE, AG, BG, XIG, XTG, WTS}
+    problem::T # for an ensemble of systems you'll provide one "template" problem
+    n_ensemble::NE # we need to know the number of ensemble members
+    A_generators::AG # need to find a better name but these will give us some discretisation
+    B_generators::BG # similarly to above
+    X_init_generators::XIG
+    X_target_generators::XTG
+    weights::WTS # weights for calculating the figure of merit and gradient
+end
 
 
 """

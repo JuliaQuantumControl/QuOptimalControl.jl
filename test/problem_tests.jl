@@ -41,26 +41,26 @@ end
 
 @testset "StateTransfer Ensemble inplace" begin
 
-    prob = StateTransferProblem(
+    prob = Problem(
         B = [Sx, Sy],
         A = Sz,
-        X_init = ρinit,
-        X_target = ρfin,
-        duration = 5.0,
-        n_timeslices = 25,
+        Xi = ρinit,
+        Xt = ρfin,
+        T = 5.0,
         n_controls = 2,
-        initial_guess = rand(2, 25),
+        guess = rand(2, 25),
+        sys_type = StateTransfer()
     )
 
 
-    ens = ClosedEnsembleProblem(
-        prob,
-        5,
-        A_gens,
-        B_gens,
-        X_init_gens,
-        X_target_gens,
-        ones(5) / 5,
+    ens = EnsembleProblem(
+        problem = prob,
+        n_ensemble = 5,
+        A_generators = A_gens,
+        B_generators = B_gens,
+        X_init_generators = X_init_gens,
+        X_target_generators = X_target_gens,
+        weights = ones(5) / 5,
     )
 
     sol = GRAPE(ens, inplace = true)

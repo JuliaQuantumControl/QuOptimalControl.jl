@@ -20,6 +20,15 @@ struct SolutionResult{R,FID,OPT,P<:Problem,A}
 end
 
 
+struct EnsembleSolutionResult{R,FID,OPT,P<:EnsembleProblem,A}
+    result::R
+    fidelity::FID
+    opti_pulses::OPT
+    problem::P
+    alg::A
+end
+
+
 
 Base.@kwdef struct GRAPE{NS,iip,opts}
     n_slices::NS = 1
@@ -118,7 +127,7 @@ function solve(prob::Problem, alg::GRAPE)
 end
 
 function solve(ens_prob::EnsembleProblem, alg::GRAPE)
-    @unpack original_problem, n_ensemble, A_gen, B_gen, XiG, XtG, weights = ens_prob
+    @unpack problem, n_ensemble, A_generators, B_generators, X_init_generators, X_target_generators, weights = ens_prob
     @unpack n_slices, isinplace, optim_options = alg
 
     ensemble_problem_array = init_ensemble(ens_prob)
@@ -186,7 +195,7 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
     init = problem.guess
 
     res = Optim.optimize(Optim.only_fg!(topt), init, Optim.LBFGS(), optim_options)
-    sol = SolutionResult(res, res.minimum, res.minimizer, prob, alg)
+    sol = EnsembleSolutionResult(res, res.minimum, res.minimizer, ens_prob, alg)
 
     return sol
 

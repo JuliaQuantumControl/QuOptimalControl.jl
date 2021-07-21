@@ -25,9 +25,10 @@ end
 prob = Problem(
     B = [SSx, SSy],
     A = SSz,
-    Xi = ρinit,
-    Xt = ρfin,
-    T = 1.0,
+    X_init = Sρinit,
+    X_target = Sρfin,
+    duration = 1.0,
+    n_timeslices = 10,
     n_controls = 2,
     guess = rand(2, 10),
     sys_type = StateTransfer()

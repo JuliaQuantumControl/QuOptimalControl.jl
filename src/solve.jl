@@ -32,23 +32,9 @@ end
 # Base.@kwdef struct ADGROUP end
 default_algorithm(::Problem) = GRAPE()
 
-
-solve(prob::Problem) = solve(prob, default_algorithm())
-
-
-function solve(prob::Problem, alg::GRAPE)
-    @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
-    @unpack n_slices, isinplace, optim_options = alg
-    @show isinplace
-
-    if isinplace
-        state_store, costate_store, propagators, fom, gradient = init_GRAPE(Xi, n_slices, 1, A, n_controls)
-
-        evolve_store = similar(state_store[1]) .* 0.0
-        grad = @views gradient[1,:,:]
-
-        topt = (F, G, x) -> begin
-            fom = _fom_and_gradient_GRAPE!(A, B, x, n_slices, T, n_controls, grad, state_store, costate_store, propagators, Xi, Xt, evolve_store, sys_type)
+This function solves the single problem using Optim and the gradient defined for the problem type.
+"""
+function GRAPE!(problem)
     
             if G !== nothing
                 @views G .= grad
@@ -58,33 +44,25 @@ function solve(prob::Problem, alg::GRAPE)
             end
         end
     
-        
-    else
-        # we could move this into another function
-        Ut = Vector{typeof(A)}(undef, n_slices + 1)
-        Lt = Vector{typeof(A)}(undef, n_slices + 1)
-        gradient = zeros(n_controls, n_slices)
-
-        topt = (F,G,x) -> begin
-            grad = @views gradient[:, :]
-            fom = _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type)
-
-            if G !== nothing
-                @views G .= grad
-            end
-            if F !== nothing
-                return fom
-            end
+    evolve_store = similar(state_store[1])
+    function _to_optim!(F, G, x)   
+        fom = 0.0     
+        k = 1
+        fom += @views QuOptimalControl._fom_and_gradient_GRAPE!(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], generators[:,k], propagators[:,k], problem.X_init, problem.X_target, evolve_store, problem)
+        if G !== nothing
+            @views G .= gradient[1,:,:]
+        end
+        if F !== nothing
+            return fom
         end
 
     end
 
-    init = guess
-    res = Optim.optimize(Optim.only_fg!(topt), init, Optim.LBFGS(), optim_options)
-    sol = SolutionResult(res, res.minimum, res.minimizer, prob, alg)
+    init = problem.initial_guess
 
-    return sol
-
+    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS())
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+    return solres
 end
 
 

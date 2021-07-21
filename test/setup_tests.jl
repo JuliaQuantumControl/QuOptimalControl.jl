@@ -4,6 +4,9 @@ const tol = 1e-6
 const ρinit = [1.0  .0]' * [1.0 0.0+0im]
 const ρfin = [0.0 1.0]' * [0.0 1.0+0im]
 
+const Sρinit = SArray{Tuple{2,2},ComplexF64}(ρinit)
+const Sρfin = SArray{Tuple{2,2},ComplexF64}(ρfin)
+
 const Sx = [0.0 1.0; 1.0 0.0+0.0im]/2
 const Sy = [0.0 -1.0im; 1.0im 0.0+0.0im]/2
 const Sz = [1.0 0.0; 0.0 -1.0+0.0im]/2

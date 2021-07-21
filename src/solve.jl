@@ -27,9 +27,9 @@ Base.@kwdef struct GRAPE{NS, iip, opts}
     optim_options::opts
 end
 
-Base.@kwdef struct dCRAB end
-Base.@kwdef struct ADGRAPE end
-Base.@kwdef struct ADGROUP end
+# Base.@kwdef struct dCRAB end
+# Base.@kwdef struct ADGRAPE end
+# Base.@kwdef struct ADGROUP end
 default_algorithm(::Problem) = GRAPE()
 
 

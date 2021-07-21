@@ -21,13 +21,13 @@ end
 Initialise an ensemble from an ensemble problem definition. Right now this creates an array of problems just now, not sure if this is the best idea though.
 """
 function init_ensemble(ens)
-    ensemble_problem_array = [deepcopy(ens.problem) for k = 1:ens.n_ensemble]
-    for k = 1:ens.n_ensemble
+    ensemble_problem_array = [deepcopy(ens.prob) for k = 1:ens.n_ens]
+    for k = 1:ens.n_ens
         prob_to_update = ensemble_problem_array[k]
-        prob_to_update = @set prob_to_update.A = ens.A_generators(k)
-        prob_to_update = @set prob_to_update.B = ens.B_generators(k)
-        prob_to_update = @set prob_to_update.Xi = ens.X_init_generators(k)
-        prob_to_update = @set prob_to_update.Xt = ens.X_target_generators(k)
+        prob_to_update = @set prob_to_update.A = ens.A_g(k)
+        prob_to_update = @set prob_to_update.B = ens.B_g(k)
+        prob_to_update = @set prob_to_update.Xi = ens.XiG(k)
+        prob_to_update = @set prob_to_update.Xt = ens.XtG(k)
         ensemble_problem_array[k] = prob_to_update
     end
     ensemble_problem_array # vector{ens.problem}

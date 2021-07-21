@@ -139,23 +139,23 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
     if isinplace
 
         # initialise holding arrays for inplace operations, these will be modified
-        state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.Xi, n_slices, n_ensemble, problem.A, problem.n_controls)
+        state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.Xi, n_slices, n_ens, problem.A, problem.n_controls)
 
         evolve_store = similar(state_store[1]) .* 0.0
         
         topt = function(F, G, x)
             fom = 0.0
-            for k = 1:n_ensemble
+            for k = 1:n_ens
                 problem = ensemble_problem_array[k]
 
                 # what is the performance hit of @unpack?
                 @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = problem
-                fom += @views _fom_and_gradient_GRAPE!(A, B, x, n_slices, T, n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], propagators[:,k], Xi, Xt, evolve_store, sys_type) * weights[k]
+                fom += @views _fom_and_gradient_GRAPE!(A, B, x, n_slices, T, n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], propagators[:,k], Xi, Xt, evolve_store, sys_type) * wts[k]
             end
 
             if G !== nothing
                 # TODO is this performant?
-                @views G .= sum(gradient .* weights, dims = 1)[1,:,:]
+                @views G .= sum(gradient .* wts, dims = 1)[1,:,:]
             end
             if F !== nothing
                 return fom
@@ -166,21 +166,21 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
         Ut = Vector{typeof(problem.A)}(undef, n_slices + 1)
         Lt = Vector{typeof(problem.A)}(undef, n_slices + 1)
 
-        gradient = zeros(ens_prob.n_ensemble, problem.n_controls, n_slices)
+        gradient = zeros(ens_prob.n_ens, problem.n_controls, n_slices)
 
         topt = function(F,G,x)
             fom = 0.0
-                for k = 1:n_ensemble
+                for k = 1:n_ens
                     problem = ensemble_problem_array[k]
 
                     @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = problem
 
                     grad = @views gradient[k, :, :]
     
-                    fom += _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type) * weights[k]
+                    fom += _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type) * wts[k]
     
                 if G !== nothing
-                    @views G .= sum(gradient .* weights, dims = 1)[1,:,:]
+                    @views G .= sum(gradient .* wts, dims = 1)[1,:,:]
                 end
                 if F !== nothing
                     return fom
@@ -204,50 +204,6 @@ end
 
 println("stop")
 
-
-
-# """
-# ensemble_sGRAPE
-
-# This function solves the ensemble problem defined in ensemble_problem using the non-mutating version of the GRAPE algorithm.
-# """
-function ensemble_sGRAPE(ensemble_problem, optim_options)
-    ensemble_problem_array = init_ensemble(ensemble_problem)
-
-    problem = ensemble_problem_array[1]
-
-    Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
-    Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
-
-    gradient = zeros(ensemble_problem.n_ensemble, problem.n_controls, problem.n_timeslices)
-
-    n_ensemble = ensemble_problem.n_ensemble
-    weights = ensemble_problem.weights
-
-    function _to_optim!(F, G, x)
-        fom = 0.0
-            for k = 1:n_ensemble
-                problem = ensemble_problem_array[k]
-                grad = @views gradient[k, :, :]
-
-                fom += _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem) * weights[k]
-
-            if G !== nothing
-                @views G .= sum(gradient .* weights, dims = 1)[1,:,:]
-            end
-            if F !== nothing
-                return fom
-            end
-        end
-    end
-
-    init = problem.initial_guess
-
-    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
-    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
-
-    return solres
-end
 
 
 

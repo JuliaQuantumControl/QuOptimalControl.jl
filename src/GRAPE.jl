@@ -12,7 +12,7 @@ Compute the gradient of a functional f(x) wrt. x
 function _ADGRAPE(functional, x; optim_options = Optim.Options())
 
     function grad_functional!(G, x)
-        G .= Zygote.gradient(functional, x)[1]
+        G .= real(Zygote.gradient(functional, x)[1])
     end
 
     res = optimize(functional, grad_functional!, x, LBFGS(), optim_options)

@@ -45,7 +45,6 @@ Given a set of Hamiltonians (drift and control) compute the evolution, Zygote co
 lets dispatch to this properly sometime
 """
 function pw_evolve_T(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timestep, timeslices, U0::T)::T where T
-    x_arr = complex.(real.(x_arr)) # needed for Zygote to use complex numbers internally
     U = U0
     # U0 = T(I(D))
     for i = 1:timeslices

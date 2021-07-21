@@ -8,7 +8,7 @@ struct StateTransfer <: ClosedSystem end
 struct UnitaryGate <: ClosedSystem end
 struct CoherenceTransfer <: OpenSystem end
 
-struct Experiment <: SystemType end
+abstract type Experiment <: SystemType end
 
 import Base.@kwdef # unsure about using this so much
 

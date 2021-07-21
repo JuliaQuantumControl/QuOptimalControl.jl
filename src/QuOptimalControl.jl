@@ -27,23 +27,18 @@ export pw_evolve,
 export algorithm,
     gradientBased,
     gradientFree,
-    GRAPE_approx,
-    GRAPE_AD,
-    dCRAB_options,
-    ADGRAPE,
-    GRAPE,
-    dCRAB,
-    GRAPE_new,
-    GRAPE!
+    SolutionResult,
+    GRAPE
 export solve
 export grad_func
 export Problem,
+    SystemType,
     ClosedSystem,
+    OpenSystem,
+    SystemTransfer,
+    UnitaryGate,
+    CoherenceTransfer,
     Experiment,
-    StateTransferProblem,
-    UnitaryProblem,
-    ClosedEnsembleProblem,
-    OpenSystemCoherenceTransfer,
     ExperimentInterface
 export visualise_expt_val, visualise_pulse
 

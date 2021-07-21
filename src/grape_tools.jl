@@ -26,8 +26,8 @@ function init_ensemble(ens)
         prob_to_update = ensemble_problem_array[k]
         prob_to_update = @set prob_to_update.A = ens.A_generators(k)
         prob_to_update = @set prob_to_update.B = ens.B_generators(k)
-        prob_to_update = @set prob_to_update.X_init = ens.X_init_generators(k)
-        prob_to_update = @set prob_to_update.X_target = ens.X_target_generators(k)
+        prob_to_update = @set prob_to_update.Xi = ens.X_init_generators(k)
+        prob_to_update = @set prob_to_update.Xt = ens.X_target_generators(k)
         ensemble_problem_array[k] = prob_to_update
     end
     ensemble_problem_array # vector{ens.problem}

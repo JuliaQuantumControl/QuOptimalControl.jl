@@ -8,20 +8,17 @@ import Base.@kwdef # unsure about using this so much
 
 # could do something like this
 # and then we do the dispatch on the system type rather than the problem itself
-@kwdef struct Problem{BT, AT, XT, T, NS, NC, IG, ST}
+@kwdef struct Problem{BT, AT, XT, T, NC, IG, ST}
     B_control::BT # control terms
     A_drift::AT # drift terms
     X_init::XT # initial state
     X_target::XT # target operator or state
     duration::T # duration of pulse
-    n_timeslices::NS # slices
+    # n_timeslices::NS # slices
     n_controls::NC # number of pulses
     initial_guess::IG # guess at controls
     system_type::ST
 end
-
-
-
 
 # """
 # Description of the dynamics of a closed state transfer problem. This also applies method also applies to optimisation of Hermitian operators
@@ -64,6 +61,7 @@ end
 #     weights::WTS # weights for calculating the figure of merit and gradient
 # end
 
+
 """
 Working in Liouville space we can do an optimisation in the presence of relaxation, we can also reuse the gradient and goal functions from before. Assuming Hermitian operators on input, need to deal with non-Hermitian.
 
@@ -83,10 +81,9 @@ Following the Khaneja and Glaser paper provided we can use the same gradient and
 """
 Working with an experiment
 """
-@kwdef struct ExperimentInterface{T, TS, NS, NC, FS, PP, IP, TO} <: Experiment
+@kwdef struct ExperimentInterface{T, TS, NC, FS, PP, IP, TO} <: Experiment
     duration::T
     timestep::TS
-    n_timeslices::NS
     n_controls::NC
     start_exp::FS # function to start exp
     pulse_path::PP

@@ -11,6 +11,7 @@ FastExpm = "7868e603-8603-432e-a1a1-694bd70b01f2"
 FileWatching = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
@@ -20,10 +21,9 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 julia = "1.6"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test"]

@@ -1,6 +1,7 @@
 using Optim
 using FileWatching
 using DelimitedFiles
+using Parameters
 
 # what is this
 abstract type Solution end
@@ -20,7 +21,12 @@ end
 
 
 
-Base.@kwdef struct GRAPE end
+Base.@kwdef struct GRAPE{NS, iip, opts}
+    n_slices::NS
+    isinplace::iip
+    optim_options::opts
+end
+
 Base.@kwdef struct dCRAB end
 Base.@kwdef struct ADGRAPE end
 Base.@kwdef struct ADGROUP end
@@ -30,9 +36,69 @@ default_algorithm(::Problem) = GRAPE()
 solve(prob::Problem) = solve(prob, default_algorithm(prob))
 
 
+function solve(prob::Problem, alg::GRAPE)
+    @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
+    @unpack n_slices, iip, optim_options = alg
+
+    if iip
+        @show "not yet son"
+    else
+        # we could move this into another function
+        @show "im here now"
+        
+        Ut = Vector{typeof(problem.A)}(undef, n_slices + 1)
+        Lt = Vector{typeof(problem.A)}(undef, n_slices + 1)
+        gradient = zeros(n_controls, n_slices)
+
+        function _to_optim!(F, G, x)
+            grad = @views gradient[:, :]
+            fom = _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type)
+
+            if G !== nothing
+                @views G .= grad
+            end
+            if F !== nothing
+                return fom
+            end
+        end
+
+        init = guess
+        res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
+        sol = SolutionResult(res, res.minimizer, res.minimum, problem, alg)
+
+        return sol
+
+    end
+
+end
 
 
+function sGRAPE(problem, optim_options)
+    # prepare some storage arrays that we will make use of throughout the computation
+    Ut = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+    Lt = Vector{typeof(problem.A)}(undef, problem.n_timeslices + 1)
+    gradient = zeros(problem.n_controls, problem.n_timeslices)
 
+    function _to_optim!(F, G, x)
+        grad = @views gradient[:, :]
+        fom = _fom_and_gradient_sGRAPE(problem.A, problem.B, x, problem.n_timeslices, problem.duration, problem.n_controls, grad, Ut, Lt, problem.X_init, problem.X_target, problem)
+
+        if G !== nothing
+            @views G .= grad
+        end
+        if F !== nothing
+            return fom
+        end
+    end
+
+    init = problem.initial_guess
+
+    res = Optim.optimize(Optim.only_fg!(_to_optim!), init, Optim.LBFGS(), optim_options)
+    solres = SolutionResult([res], [res.minimum], [res.minimizer], problem)
+
+    return solres
+end
+    
 
 
 

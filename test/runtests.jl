@@ -5,4 +5,5 @@ using StaticArrays
 
 
 include("setup_tests.jl")
-include("problem_tests.jl")
+include("state_transfer_tests.jl")
+

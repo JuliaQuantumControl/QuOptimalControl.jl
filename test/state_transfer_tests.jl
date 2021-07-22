@@ -98,3 +98,5 @@ end
     @test sol.result.minimum - C1(ρfin, ρfin) < tol * 10
 
 end
+
+

@@ -49,7 +49,7 @@ default_algorithm(::Problem) = GRAPE()
 
 solve(prob::Problem) = solve(prob, default_algorithm())
 
-
+####################### Traditional GRAPE ###########################
 function solve(prob::Problem, alg::GRAPE)
     @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
     @unpack n_slices, isinplace, optim_options = alg
@@ -130,7 +130,7 @@ function solve(prob::Problem, alg::GRAPE)
     return sol
 
 end
-
+####################### Traditional GRAPE Ensemble ###########################
 function solve(ens_prob::EnsembleProblem, alg::GRAPE)
     @unpack prob, n_ens, A_g, B_g, XiG, XtG, wts = ens_prob
     @unpack n_slices, isinplace, optim_options = alg
@@ -207,6 +207,8 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
 
 end
 
+
+####################### ADGRAPE ###########################
 # for ADGRAPE we need to dispatch on the system type too
 function solve(prob::Problem, alg::ADGRAPE)
     # @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
@@ -232,6 +234,19 @@ function _get_functional(prob, n_slices, sys_type::StateTransfer)
     return functional
 end
 
+function _get_functional(prob, n_slices, sys_type::UnitaryGate)
+    @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
+    D = size(A, 1)
+    u0 = typeof(A)(I(D))
+    function functional(x)
+        U = pw_evolve_T(A, B, x, n_controls, T/n_slices, n_slices, u0)
+        ev = U * Xi
+        return C1(Xt, ev)
+    end
+    return functional
+end
+
+####################### ADGRAPE Ensemble ###########################
 function solve(prob::EnsembleProblem, alg::ADGRAPE)
     @unpack n_slices, optim_options = alg
     ensemble_problem_array = init_ensemble(prob)
@@ -266,6 +281,30 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
     return functional
 end
 
+
+
+
+function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::UnitaryGate)
+
+    A = ens_prob_arr[1].A
+    D = size(A, 1)
+    u0 = typeof(A)(I(D))
+
+    function functional(x)
+        fom = 0.0
+        for k = 1:n_ens
+            # for a specific ensemble problem
+            @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = ens_prob_arr[k]
+            
+            U = pw_evolve_T(A, B, x, n_controls, T/n_slices, n_slices, u0)
+            ev = U * Xi
+            err = C1(Xt, ev) * wts[k]
+            fom = fom + err
+        end
+        return fom
+    end
+    return functional
+end
 println("stop")
 
 

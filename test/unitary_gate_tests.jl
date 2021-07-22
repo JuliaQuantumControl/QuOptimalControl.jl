@@ -98,3 +98,51 @@ end
 end
 
 
+@testset "Unitary X gate pulse ADGRAPE" begin
+
+    prob = Problem(
+        B = [Sx, Sy],
+        A = Sz,
+        Xi = Uinit,
+        Xt = Ufin,
+        T = 1.0,
+        n_controls = 2,
+        guess = rand(2, 10),
+        sys_type = UnitaryGate(),
+    )
+
+    sol = solve(prob, ADGRAPE(n_slices = 10))
+
+    @test sol.result.minimum/2 - C1(Ufin, Ufin) < tol
+end
+
+
+
+@testset "Robust X gate pulse ADGRAPE" begin
+
+    prob = Problem(
+        B = [Sx, Sy],
+        A = Sz,
+        Xi = Uinit,
+        Xt = Ufin,
+        T = 5.0,
+        n_controls = 2,
+        guess = rand(2, 100),
+        sys_type = UnitaryGate()
+    )
+
+
+    ens = EnsembleProblem(
+        prob = prob,
+        n_ens = 5,
+        A_g = A_gens,
+        B_g = B_gens,
+        XiG = U_init_gens,
+        XtG = U_target_gens,
+        wts = ones(5) / 5,
+    )
+
+    sol = solve(ens, ADGRAPE(n_slices = 100))
+    @test sol.result.minimum/2 - C1(ρfin, ρfin) < tol
+
+end

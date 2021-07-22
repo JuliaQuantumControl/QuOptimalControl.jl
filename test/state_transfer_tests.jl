@@ -100,3 +100,53 @@ end
 end
 
 
+@testset "StateTransfer w/ ADGRAPE" begin
+
+    prob = Problem(
+        B = [Sx, Sy],
+        A = Sz,
+        Xi = ρinit,
+        Xt = ρfin,
+        T = 1.0,
+        n_controls = 2,
+        guess = rand(2, 10),
+        sys_type = StateTransfer(),
+    )
+
+    sol = solve(prob, ADGRAPE(n_slices = 10))
+
+    @test sol.result.minimum - C1(ρfin, ρfin) < tol
+end
+
+
+
+
+@testset "StateTransfer Ensemble ADGRAPE" begin
+
+    prob = Problem(
+        B = [Sx, Sy],
+        A = Sz,
+        Xi = ρinit,
+        Xt = ρfin,
+        T = 5.0,
+        n_controls = 2,
+        guess = rand(2, 25),
+        sys_type = StateTransfer()
+    )
+
+
+    ens = EnsembleProblem(
+        prob = prob,
+        n_ens = 5,
+        A_g = A_gens,
+        B_g = B_gens,
+        XiG = X_init_gens,
+        XtG = X_target_gens,
+        wts = ones(5) / 5,
+    )
+
+    sol = solve(ens, ADGRAPE(n_slices = 25))
+    @test sol.result.minimum - C1(ρfin, ρfin) < tol
+
+end
+

@@ -17,18 +17,54 @@ function init_GRAPE(X, n_timeslices, n_ensemble, A, n_controls)
     return (states, costates, propagators, fom, gradient)
 end
 
+
+
+
 """
-Initialise an ensemble from an ensemble problem definition. Right now this creates an array of problems just now, not sure if this is the best idea though.
+Compute the eigen decomposition of a generator matrix G. Based on work by both Shai Machnes and Ville Bergholm.
+
+Types are an issue here.
 """
-function init_ensemble(ens)
-    ensemble_problem_array = [deepcopy(ens.prob) for k = 1:ens.n_ens]
-    for k = 1:ens.n_ens
-        prob_to_update = ensemble_problem_array[k]
-        prob_to_update = @set prob_to_update.A = ens.A_g(k)
-        prob_to_update = @set prob_to_update.B = ens.B_g(k)
-        prob_to_update = @set prob_to_update.Xi = ens.XiG(k)
-        prob_to_update = @set prob_to_update.Xt = ens.XtG(k)
-        ensemble_problem_array[k] = prob_to_update
+function eig_factors(G; antihermitian = false, tol = 1e-10)
+    if antihermitian
+        d, v = eigen(1im * G)
+        d = -1im .* d
+    else
+        d, v = eigen(G)
     end
-    ensemble_problem_array # vector{ens.problem}
+
+    ooo = ones(size(d)[1])
+    temp = d * ooo'
+    diff = temp - temp'
+    degenerate_mask = abs.(diff) .< tol
+    diff[degenerate_mask] .= 1
+    exp_d = exp.(d)
+
+    temp = exp_d * ooo'
+    exp_diff = temp - temp'
+    zeta = exp_diff / diff
+    zeta[degenerate_mask] .= temp[degenerate_mask]
+    return (v, zeta, exp_d)
+end
+
+
+"""
+Function to compute the matrix exponential using the eigenvalue decomposition of the matrix, this is slower than exp if your matrix can be a StaticArray
+"""
+function expm_exact_gradient(H::T, dt)::T where {T}
+    dt_H = dt * H
+    v, zeta, exp_d = eig_factors(dt_H, antihermitian = true)
+
+    v * diagm(exp_d) * v'
+end
+
+"""
+Copied from Ville's code, seems to be slower in Julia than simply taking trace but is faster in Matlab/Python
+Function to compute trace(A @ B) efficiently.
+
+Utilizes the identity trace(A @ B) == sum(transpose(A) * B).
+Left side is O(n^3) to compute, right side is O(n^2).
+"""
+function trace_matmul(A, B)
+    sum(transpose(A) .* B)
 end

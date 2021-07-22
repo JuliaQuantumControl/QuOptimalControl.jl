@@ -26,6 +26,19 @@ function commutator!(A, B, store)
 end
 
 
+"""
+Function that will take an optimal pulse and a solution result and simulate the pulse again returning the output so you can check the gate is correct
+"""
+function test_pulse(prob,solres)
+    @show "not implemented"
+
+
+end
+
+
+
+
+
 
 # struct SolutionResult <: Solution
 #     result # optimisation result (not saved)

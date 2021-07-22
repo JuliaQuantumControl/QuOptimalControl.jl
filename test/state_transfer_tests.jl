@@ -24,8 +24,8 @@ end
     prob = Problem(
         B = [SSx, SSy],
         A = SSz,
-        Xi = ρinit,
-        Xt = ρfin,
+        Xi = ρinitS,
+        Xt = ρfinS,
         T = 1.0,
         n_controls = 2,
         guess = rand(2, 10),
@@ -33,7 +33,7 @@ end
     )
 
     sol = solve(prob, GRAPE(n_slices = 10, isinplace = false))
-    @test sol.result.minimum - C1(ρfin, ρfin) < tol
+    @test sol.result.minimum - C1(ρfinS, ρfinS) < tol
 
 end
 
@@ -95,7 +95,7 @@ end
     )
 
     sol = solve(ens, GRAPE(n_slices = 25, isinplace = false))
-    @test sol.result.minimum - C1(ρfin, ρfin) < tol * 10
+    @test sol.result.minimum - C1(ρfinS, ρfinS) < tol * 10
 
 end
 

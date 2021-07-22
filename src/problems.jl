@@ -4,6 +4,7 @@ abstract type SystemType end
 abstract type ClosedSystem <: SystemType end
 abstract type OpenSystem <: SystemType end
 
+# these are the problem types
 struct StateTransfer <: ClosedSystem end
 struct UnitaryGate <: ClosedSystem end
 struct CoherenceTransfer <: OpenSystem end

@@ -11,9 +11,9 @@ Needs citation from the Schuster lab paper
 Density matrix fidelity
 """
 function C1(KT, KN)
-    # D = size(KT)[1]
+    D = size(KT)[1]
     # 1 - abs2(tr(KT' * KN) / D)
-    1 - real(tr(KT' * KN))
+    1 - real(tr(KT' * KN))/D
 end
 
 """
@@ -80,7 +80,7 @@ Cost functions for the GRAPE algorithm
 Unitary synthesis figure of merit, from Khaneja et. al. paper (proper citation needed)
 """
 function fom_func(system_type::UnitaryGate, t, k, state, costate, props)::Float64
-    @views tr(costate[t, k]' * state[t, k]) * tr(state[t, k]' * costate[t, k])
+    @views rael(tr(costate[t, k]' * state[t, k]) * tr(state[t, k]' * costate[t, k]))
 end
 
 function fom_func(
@@ -93,11 +93,11 @@ function fom_func(
 )::Float64
     # recall that target is always the last entry of L
     # and that we have in U[end] the propagated forward target state
-    @views C1(costate[t, k], state[t, k])
+    @views real(C1(costate[t, k], state[t, k]))
 end
 
 function fom_func(system_type::UnitaryGate, t, state, costate, props)::Float64
-    @views tr(state[t]' * costate[t]) * tr(state[t]' * costate[t])
+    @views real(tr(state[t]' * costate[t]) * tr(state[t]' * costate[t]))
 end
 
 function fom_func(
@@ -107,5 +107,5 @@ function fom_func(
     costate,
     props,
 )::Float64
-    @views C1(costate[t], state[t])
+    @views real(C1(costate[t], state[t]))
 end

@@ -52,3 +52,20 @@ X_target_gens = k -> odd_switch(k)
 
 X_init_gens_static = k -> ρinitS
 X_target_gens_static = k -> SMatrix{2,2,ComplexF64}(odd_switch(k))
+
+
+function odd_switch_unitary(x)
+    if Bool(x % 2)
+        return Ufin
+    else
+        return Uinit
+    end
+end
+
+U_init_gens = k -> Uinit
+U_target_gens = k -> odd_switch_unitary(k)
+
+
+
+U_init_gens_static = k -> UinitS
+U_target_gens_static = k -> SMatrix{2,2,ComplexF64}(odd_switch_unitary(k))

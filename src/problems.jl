@@ -22,39 +22,10 @@ import Base.@kwdef # unsure about using this so much
     Xi::XT # initial state
     Xt::XT # target operator or state
     T::TT # duration of pulse
-    # n_timeslices::NS # slices
     n_controls::NC # number of pulses
     guess::IG # guess at controls
     sys_type::ST
 end
-
-# """
-# Description of the dynamics of a closed state transfer problem. This also applies method also applies to optimisation of Hermitian operators
-# """
-# @kwdef struct StateTransferProblem{BT, AT, XT, T, NS, NC, IG} <: ClosedSystem
-#     B_control::BT # control terms
-#     A_drift::AT # drift terms
-#     X_init::XT # initial state
-#     X_target::XT # target operator or state
-#     duration::T # duration of pulse
-#     n_timeslices::NS # slices
-#     n_controls::NC # number of pulses
-#     initial_guess::IG # guess at controls
-# end
-
-# """
-# Description of the dynamics of a unitary synthesis problem. Although this contains the same information as another closed state problem by defining it separately we can choose the evolution methods that make sense for the problem
-# """
-# @kwdef struct UnitaryProblem{BT, AT, XT, T, NS, NC, IG} <: ClosedSystem
-#     B_control::BT # control terms
-#     A_drift::AT # drift terms
-#     X_init::XT # initial state
-#     X_target::XT # target operator or state
-#     duration::T # duration of pulse
-#     n_timeslices::NS # slices
-#     n_controls::NC # number of pulses
-#     initial_guess::IG # guess at controls
-# end
 
 """
 Define an ensemble of problems, can provide any method for computing the new drift or control Hamiltonians

@@ -19,7 +19,7 @@ struct SolutionResult{R,FID,OPT,P<:Problem,A}
     alg::A
 end
 
-
+# could get away with this being just one struct if we don't subtype Problem
 struct EnsembleSolutionResult{R,FID,OPT,P<:EnsembleProblem,A}
     result::R
     fidelity::FID
@@ -32,7 +32,7 @@ end
 
 Base.@kwdef struct GRAPE{NS,IIP,OPTS}
     n_slices::NS = 1
-    isinplace::IIP = true
+    isinplace::IIP = true # does this make sense here? It's more of a problem parameter, but not really because AD Grape can't be done "inplace" since we can't mutate
     optim_options::OPTS = Optim.Options()
 end
 
@@ -353,48 +353,3 @@ println("stop")
 
 
 
-
-# # """
-# # Solve closed state transfer problem using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
-# # """
-# # function ADGRAPE(prob::StateTransferProblem; optim_options = Optim.Options())
-# #     wts = ones(prob.n_ensemble)
-# #     D = size(prob.A[1])[1]
-# #     u0 = typeof(prob.A[1])(I(D))
-
-# #     function user_functional(x)
-# #         fom = 0.0
-# #         for k = 1:prob.n_ensemble
-# #             U = pw_evolve_T(prob.A[k], prob.B[k], x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, u0)
-# #             fom += C1(prob.X_target[k], (U * prob.X_init[k] * U')) * wts[k]
-# #         end
-# #         fom
-# #     end
-
-# #     init = prob.initial_guess
-# #     res = _ADGRAPE(user_functional, init, optim_options=optim_options)
-
-# #     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
-# # end
-
-# # """
-# # Solve a unitary synthesis prob using ADGRAPE, this means that we need to use a piecewise evolution function that is Zygote compatible!
-# # """
-# # function ADGRAPE(prob::UnitaryProblem; optim_options = Optim.Options())
-# #     wts = ones(prob.n_ensemble)
-# #     u0 = typeof(prob.A[1])(I(D))
-
-# #     function user_functional(x)
-# #         fom = 0.0
-# #         for k = 1:prob.n_ensemble
-# #             U = pw_evolve_T(prob.A[k], prob.B[k], x, prob.n_controls, prob.duration/prob.n_timeslices, prob.n_timeslices, u0)
-# #             fom += C1(prob.X_target[k], U * prob.X_init[k]) * wts[k]
-# #         end
-# #         fom
-# #     end
-
-# #     init = prob.initial_guess
-# #     res = _ADGRAPE(user_functional, init, optim_options=optim_options)
-
-# #     solres = SolutionResult([res], [res.minimum], [res.minimizer], prob)
-# # end

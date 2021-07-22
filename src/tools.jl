@@ -2,10 +2,10 @@
 Just some useful functions
 """
 
-
 using BSON
 using DelimitedFiles
 using StaticArrays
+using Setfield
 
 #const σₓ = SMatrix{} # etc
 

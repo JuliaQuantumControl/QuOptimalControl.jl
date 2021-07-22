@@ -1,5 +1,3 @@
-using Setfield
-
 """
 Initialise all the storage arrays that will be used in a GRAPE optimisation
 """

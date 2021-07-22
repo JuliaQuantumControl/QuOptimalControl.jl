@@ -41,10 +41,10 @@ visualise_pulse(sol.opti_pulses, duration = prob.T)
 
 ## Installation
 
-Using Julia's package manager QuOptimalControl.jl is easy to install and get start with!
+Using Julia's package manager QuOptimalControl.jl is easy to install and use!
 
 ```julia
-] add QuOptimalControl
+] add https://github.com/alastair-marshall/QuOptimalControl.jl
 ```
 
 

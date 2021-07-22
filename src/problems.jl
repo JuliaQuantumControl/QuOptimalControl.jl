@@ -59,7 +59,7 @@ end
 """
 Define an ensemble of problems, can provide any method for computing the new drift or control Hamiltonians
 """
-@kwdef struct EnsembleProblem{T, NE, AG, BG, XIG, XTG, WTS}
+@kwdef struct EnsembleProblem{T,NE,AG,BG,XIG,XTG,WTS}
     prob::T # for an ensemble of systems you'll provide one "template" problem
     n_ens::NE # we need to know the number of ensemble members
     A_g::AG # need to find a better name but these will give us some discretisation

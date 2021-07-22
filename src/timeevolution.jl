@@ -8,15 +8,7 @@ Contains code to perform time evolution
 """
 Given a set of Hamiltonians (drift and control) compute the propagator for use with static arrays
 """
-function pw_evolve(
-    H₀,
-    Hₓ_array,
-    x_arr,
-    n_pulses,
-    timestep,
-    timeslices,
-    U0,
-)
+function pw_evolve(H₀, Hₓ_array, x_arr, n_pulses, timestep, timeslices, U0)
     U = U0
     # U0 = T(I(D))
     for i = 1:timeslices

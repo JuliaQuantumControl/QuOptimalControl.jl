@@ -36,7 +36,7 @@ Base.@kwdef struct GRAPE{NS,IIP,OPTS}
     optim_options::OPTS = Optim.Options()
 end
 
-Base.@kwdef struct ADGRAPE{NS, opts}
+Base.@kwdef struct ADGRAPE{NS,opts}
     n_slices::NS = 1
     optim_options::opts = Optim.Options()
 end
@@ -144,55 +144,85 @@ function solve(ens_prob::EnsembleProblem, alg::GRAPE)
     if isinplace
 
         # initialise holding arrays for inplace operations, these will be modified
-        state_store, costate_store, propagators, fom, gradient = init_GRAPE(problem.Xi, n_slices, n_ens, problem.A, problem.n_controls)
+        state_store, costate_store, propagators, fom, gradient =
+            init_GRAPE(problem.Xi, n_slices, n_ens, problem.A, problem.n_controls)
 
         evolve_store = similar(state_store[1]) .* 0.0
-        
-        topt = function(F, G, x)
+
+        topt = function (F, G, x)
             fom = 0.0
             for k = 1:n_ens
                 problem = ensemble_problem_array[k]
 
                 # what is the performance hit of @unpack?
                 @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = problem
-                fom += @views _fom_and_gradient_GRAPE!(A, B, x, n_slices, T, n_controls, gradient[k, :, :], state_store[:, k], costate_store[:, k], propagators[:,k], Xi, Xt, evolve_store, sys_type) * wts[k]
+                fom += @views _fom_and_gradient_GRAPE!(
+                    A,
+                    B,
+                    x,
+                    n_slices,
+                    T,
+                    n_controls,
+                    gradient[k, :, :],
+                    state_store[:, k],
+                    costate_store[:, k],
+                    propagators[:, k],
+                    Xi,
+                    Xt,
+                    evolve_store,
+                    sys_type,
+                ) * wts[k]
             end
 
             if G !== nothing
                 # TODO is this performant?
-                @views G .= sum(gradient .* wts, dims = 1)[1,:,:]
+                @views G .= sum(gradient .* wts, dims = 1)[1, :, :]
             end
             if F !== nothing
                 return fom
             end
         end
     else
-            
+
         Ut = Vector{typeof(problem.A)}(undef, n_slices + 1)
         Lt = Vector{typeof(problem.A)}(undef, n_slices + 1)
 
         gradient = zeros(ens_prob.n_ens, problem.n_controls, n_slices)
 
-        topt = function(F,G,x)
+        topt = function (F, G, x)
             fom = 0.0
-                for k = 1:n_ens
-                    problem = ensemble_problem_array[k]
+            for k = 1:n_ens
+                problem = ensemble_problem_array[k]
 
-                    @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = problem
+                @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = problem
 
-                    grad = @views gradient[k, :, :]
-    
-                    fom += _fom_and_gradient_sGRAPE(A, B, x, n_slices, T, n_controls, grad, Ut, Lt, Xi, Xt, sys_type) * wts[k]
-    
+                grad = @views gradient[k, :, :]
+
+                fom +=
+                    _fom_and_gradient_sGRAPE(
+                        A,
+                        B,
+                        x,
+                        n_slices,
+                        T,
+                        n_controls,
+                        grad,
+                        Ut,
+                        Lt,
+                        Xi,
+                        Xt,
+                        sys_type,
+                    ) * wts[k]
+
                 if G !== nothing
-                    @views G .= sum(gradient .* wts, dims = 1)[1,:,:]
+                    @views G .= sum(gradient .* wts, dims = 1)[1, :, :]
                 end
                 if F !== nothing
                     return fom
                 end
             end
         end
-    
+
 
     end
 
@@ -227,7 +257,7 @@ function _get_functional(prob, n_slices, sys_type::StateTransfer)
     D = size(A, 1)
     u0 = typeof(A)(I(D))
     function functional(x)
-        U = pw_evolve_T(A, B, x, n_controls, T/n_slices, n_slices, u0)
+        U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
         ev = U * Xi * U'
         return C1(Xt, ev)
     end
@@ -239,7 +269,7 @@ function _get_functional(prob, n_slices, sys_type::UnitaryGate)
     D = size(A, 1)
     u0 = typeof(A)(I(D))
     function functional(x)
-        U = pw_evolve_T(A, B, x, n_controls, T/n_slices, n_slices, u0)
+        U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
         ev = U * Xi
         return C1(Xt, ev)
     end
@@ -251,7 +281,13 @@ function solve(prob::EnsembleProblem, alg::ADGRAPE)
     @unpack n_slices, optim_options = alg
     ensemble_problem_array = init_ensemble(prob)
 
-    func = _get_ensemble_functional(ensemble_problem_array, prob.n_ens, n_slices, prob.wts, ensemble_problem_array[1].sys_type)
+    func = _get_ensemble_functional(
+        ensemble_problem_array,
+        prob.n_ens,
+        n_slices,
+        prob.wts,
+        ensemble_problem_array[1].sys_type,
+    )
 
     init = ensemble_problem_array[1].guess
     res = _ADGRAPE(func, init, optim_options)
@@ -259,7 +295,13 @@ function solve(prob::EnsembleProblem, alg::ADGRAPE)
     return sol
 end
 
-function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::StateTransfer)
+function _get_ensemble_functional(
+    ens_prob_arr,
+    n_ens,
+    n_slices,
+    wts,
+    sys_type::StateTransfer,
+)
 
     A = ens_prob_arr[1].A
     D = size(A, 1)
@@ -270,8 +312,8 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
         for k = 1:n_ens
             # for a specific ensemble problem
             @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = ens_prob_arr[k]
-            
-            U = pw_evolve_T(A, B, x, n_controls, T/n_slices, n_slices, u0)
+
+            U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
             ev = U * Xi * U'
             err = C1(Xt, ev) * wts[k]
             fom = fom + err
@@ -280,8 +322,6 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
     end
     return functional
 end
-
-
 
 
 function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::UnitaryGate)
@@ -295,8 +335,8 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
         for k = 1:n_ens
             # for a specific ensemble problem
             @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = ens_prob_arr[k]
-            
-            U = pw_evolve_T(A, B, x, n_controls, T/n_slices, n_slices, u0)
+
+            U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
             ev = U * Xi
             err = C1(Xt, ev) * wts[k]
             fom = fom + err
@@ -305,6 +345,9 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
     end
     return functional
 end
+
+
+
 println("stop")
 
 

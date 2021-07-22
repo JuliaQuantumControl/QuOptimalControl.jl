@@ -49,7 +49,7 @@ end
         T = 5.0,
         n_controls = 2,
         guess = rand(2, 25),
-        sys_type = StateTransfer()
+        sys_type = StateTransfer(),
     )
 
 
@@ -71,7 +71,7 @@ end
 
 
 @testset "StateTransfer Ensemble out of place" begin
-    
+
     prob = Problem(
         B = [SSx, SSy],
         A = SSz,
@@ -80,7 +80,7 @@ end
         T = 5.0,
         n_controls = 2,
         guess = rand(2, 25),
-        sys_type = StateTransfer()
+        sys_type = StateTransfer(),
     )
 
 
@@ -131,7 +131,7 @@ end
         T = 5.0,
         n_controls = 2,
         guess = rand(2, 25),
-        sys_type = StateTransfer()
+        sys_type = StateTransfer(),
     )
 
 

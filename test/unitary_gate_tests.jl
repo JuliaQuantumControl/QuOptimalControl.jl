@@ -48,7 +48,7 @@ end
         T = 5.0,
         n_controls = 2,
         guess = rand(2, 100),
-        sys_type = UnitaryGate()
+        sys_type = UnitaryGate(),
     )
 
 
@@ -62,14 +62,21 @@ end
         wts = ones(5) / 5,
     )
 
-    sol = solve(ens, GRAPE(n_slices = 100, isinplace = true, optim_options = Optim.Options(f_tol=1e-3)))
+    sol = solve(
+        ens,
+        GRAPE(
+            n_slices = 100,
+            isinplace = true,
+            optim_options = Optim.Options(f_tol = 1e-3),
+        ),
+    )
     @test sol.result.minimum - C1(ρfin, ρfin) < tol
 
 end
 
 
 @testset "Robust X gate pulse inplace static arrays" begin
-    
+
     prob = Problem(
         B = [SSx, SSy],
         A = SSz,
@@ -78,7 +85,7 @@ end
         T = 10.0,
         n_controls = 2,
         guess = rand(2, 100),
-        sys_type = UnitaryGate()
+        sys_type = UnitaryGate(),
     )
 
 
@@ -92,7 +99,14 @@ end
         wts = ones(5) / 5,
     )
 
-    sol = solve(ens, GRAPE(n_slices = 100, isinplace = false, optim_options=Optim.Options(f_tol=1e-3)))
+    sol = solve(
+        ens,
+        GRAPE(
+            n_slices = 100,
+            isinplace = false,
+            optim_options = Optim.Options(f_tol = 1e-3),
+        ),
+    )
     @test sol.result.minimum - C1(UinitS, UfinS) < tol
 
 end
@@ -113,7 +127,7 @@ end
 
     sol = solve(prob, ADGRAPE(n_slices = 25))
 
-    pw_evolve(prob.A, prob.B, sol.opti_pulses, 2, 1.0/25, 25, Uinit)
+    pw_evolve(prob.A, prob.B, sol.opti_pulses, 2, 1.0 / 25, 25, Uinit)
 
     @test sol.result.minimum - C1(Ufin, Ufin) < tol
 end
@@ -130,7 +144,7 @@ end
         T = 5.0,
         n_controls = 2,
         guess = rand(2, 100),
-        sys_type = UnitaryGate()
+        sys_type = UnitaryGate(),
     )
 
 
@@ -146,7 +160,7 @@ end
 
     sol = solve(ens, ADGRAPE(n_slices = 100))
 
-    pw_evolve(prob.A, prob.B, sol.opti_pulses, 2, 5/100, 100, Uinit)
+    pw_evolve(prob.A, prob.B, sol.opti_pulses, 2, 5 / 100, 100, Uinit)
 
     @test sol.result.minimum - C1(ρfin, ρfin) < tol
 

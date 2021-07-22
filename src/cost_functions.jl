@@ -12,8 +12,8 @@ Density matrix fidelity
 """
 function C1(KT, KN)
     D = size(KT)[1]
-    # 1 - abs2(tr(KT' * KN) / D)
-    1 - real(tr(KT' * KN))/D
+    1 - abs2(tr(KT' * KN)/D)
+    # 1 - real(tr(KT' * KN))/D
 end
 
 """

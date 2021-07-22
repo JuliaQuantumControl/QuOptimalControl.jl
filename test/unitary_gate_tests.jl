@@ -102,18 +102,20 @@ end
 
     prob = Problem(
         B = [Sx, Sy],
-        A = Sz,
+        A = 0.0 * Sz,
         Xi = Uinit,
         Xt = Ufin,
         T = 1.0,
         n_controls = 2,
-        guess = rand(2, 10),
+        guess = rand(2, 25),
         sys_type = UnitaryGate(),
     )
 
-    sol = solve(prob, ADGRAPE(n_slices = 10))
+    sol = solve(prob, ADGRAPE(n_slices = 25))
 
-    @test sol.result.minimum/2 - C1(Ufin, Ufin) < tol
+    pw_evolve(prob.A, prob.B, sol.opti_pulses, 2, 1.0/25, 25, Uinit)
+
+    @test sol.result.minimum - C1(Ufin, Ufin) < tol
 end
 
 
@@ -143,6 +145,9 @@ end
     )
 
     sol = solve(ens, ADGRAPE(n_slices = 100))
-    @test sol.result.minimum/2 - C1(ρfin, ρfin) < tol
+
+    pw_evolve(prob.A, prob.B, sol.opti_pulses, 2, 5/100, 100, Uinit)
+
+    @test sol.result.minimum - C1(ρfin, ρfin) < tol
 
 end

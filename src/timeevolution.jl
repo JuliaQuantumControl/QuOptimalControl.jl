@@ -5,46 +5,32 @@ using FastExpm
 Contains code to perform time evolution
 """
 
-"""
-Given a set of Hamiltonians (drift and control) compute the propagator for use with static arrays
-"""
-function pw_evolve(H₀, Hₓ_array, x_arr, n_pulses, timestep, timeslices, U0)
-    U = U0
-    # U0 = T(I(D))
-    for i = 1:timeslices
-        # compute the propagator
-        Htot = H₀
-        for j = 1:n_pulses
-            @views Htot = Htot + Hₓ_array[j] .* x_arr[j, i]
-        end
-        U = exp((-1.0im * timestep) .* Htot) * U
-    end
-    U
+Base.@kwdef struct Piecewise{TS,EXPM}
+    n_n_slices::TS = 1
+    expm_method::EXPM
 end
 
 
+Base.@kwdef struct Continuous{OPTS}
+    ode_options::OPTS
+end
+
+
+
+
+
 """
-Given a set of Hamiltonians (drift and control) compute the evolution, Zygote compatible
-lets dispatch to this properly sometime
+Given a set of Hamiltonians (drift and control) compute the propagator for use with static arrays
 """
-function pw_evolve_T(
-    H₀::T,
-    Hₓ_array::Array{T,1},
-    x_arr::Array{Float64},
-    n_pulses,
-    timestep,
-    timeslices,
-    U0::T,
-)::T where {T}
+function pw_evolve(A, B, x, n_pulses, dt, n_slices, U0)
     U = U0
-    # U0 = T(I(D))
-    for i = 1:timeslices
+    for i = 1:n_slices
         # compute the propagator
-        Htot = H₀
+        Htot = A
         for j = 1:n_pulses
-            @views Htot = Htot + Hₓ_array[j] .* x_arr[j, i]
+            @views Htot = Htot + B[j] .* x[j, i]
         end
-        U = exp((-1.0im * timestep) .* Htot) * U
+        U = exp((-1.0im * dt) .* Htot) * U
     end
     U
 end
@@ -53,95 +39,52 @@ end
 Given a set of Hamiltonians compute the piecewise evolution saving the propagator for each time slice
 """
 #TODO maybe rewrite this so its not allocation out inside but we allocate it ourselves, make it a vector of static arrays?
-function pw_evolve_save(
-    H₀::T,
-    Hₓ_array,
-    x_arr,
-    n_pulses,
-    timestep,
-    timeslices,
-) where {T<:StaticMatrix}
-    out = Vector{T}(undef, timeslices)
-    for i = 1:timeslices
+function pw_evolve_save(A::T, B, x, n_pulses, dt, n_slices) where {T<:StaticMatrix}
+    out = Vector{T}(undef, n_slices)
+    for i = 1:n_slices
         # compute the propagator
-        Htot = H₀
+        Htot = A
         for j = 1:n_pulses
-            @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+            @views Htot = Htot + B[j] * x[j, i]
         end
-        @views U = exp(-1.0im * timestep * Htot)# * U
+        @views U = exp(-1.0im * dt * Htot)# * U
         out[i] = U
     end
     out
 end
 
 
-# function pw_evolve_save_new(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64,2}, n_pulses, timestep, timeslices) where T
-#     out = Vector{T}(undef, timeslices)
-#     for i = 1:timeslices
-#         # compute the propagator
-#         Htot = H₀
-#         for j = 1:n_pulses
-#             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
-#         end
-#         @views U = fastExpm(-1.0im * timestep * Htot)# * U
-#         out[i] = U
-#     end
-#     out
-# end
-
-#
-# """
-# Function to compute the Hamiltonians for a piecewise constant control and save them. Low allocations when used with StaticArrays!
-# """
-# function pw_ham_save(H₀::T, Hₓ_array::Array{T,1}, x_arr::Array{Float64}, n_pulses, timeslices) where T
-#     out = Vector{T}(undef, timeslices)
-#     for i = 1:timeslices
-#         Htot = H₀
-#         for j = 1:n_pulses
-#             @views Htot = Htot + Hₓ_array[j] * x_arr[j, i]
-#         end
-#         out[i] = Htot
-#     end
-#     out
-# end
 
 """
 An almost allocation free (1 alloc in my tests) version of the Hamiltonian saver, since the update is inplace we have to be careful with the definition of out!
 """
-function pw_ham_save!(
-    H₀::T,
-    Hₓ_array::Array{T,1},
-    x_arr::Array{Float64,2},
-    n_pulses,
-    timeslices,
-    out,
-) where {T}
+function pw_ham_save!(A, B, x, n_pulses, n_slices, out)
     K = n_pulses
-    Htot = similar(H₀) .* 0.0
+    Htot = similar(A) .* 0.0
 
-    @views @inbounds for i = 1:timeslices
+    @views @inbounds for i = 1:n_slices
         Htot .= 0.0 .* Htot
         @inbounds for j = 1:K
-            @. Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+            @. Htot = Htot + B[j] * x[j, i]
         end
-        @. out[i] = Htot + H₀
+        @. out[i] = Htot + A
     end
 end
 
 """
 An almost allocation free (1 alloc in my tests) version of the Generator saving function, this saves the generators of propagators (implementation might differ for prob)
 """
-function pw_gen_save!(H₀, Hₓ_array, x_arr, n_pulses, timeslices, duration, out)
+function pw_gen_save!(A, B, x, n_pulses, n_slices, duration, out)
     K = n_pulses
-    Htot = similar(H₀) .* 0.0
-    dt = duration / timeslices
+    Htot = similar(A) .* 0.0
+    dt = duration / n_slices
 
-    @views @inbounds for i = 1:timeslices
+    @views @inbounds for i = 1:n_slices
         Htot .= 0.0 .* Htot
         @inbounds for j = 1:K
-            @. Htot = Htot + Hₓ_array[j] * x_arr[j, i]
+            @. Htot = Htot + B[j] * x[j, i]
         end
-        @. out[i] = (Htot + H₀) .* (-1.0im * dt)
+        @. out[i] = (Htot + A) .* (-1.0im * dt)
     end
 end
 
@@ -149,23 +92,15 @@ end
 """
 Compute the propagator using fastExpm and save it in the array defined in out
 """
-function pw_prop_save!(
-    H₀::T,
-    Hₓ_array::Array{T,1},
-    x_arr,
-    n_pulses,
-    timeslices,
-    timestep,
-    out,
-) where {T}
+function pw_prop_save!(A, B, x, n_pulses, n_slices, dt, out)
     K = n_pulses
-    Htot = similar(H₀) .* 0.0
+    Htot = similar(A) .* 0.0
 
-    @inbounds for i = 1:timeslices
+    @inbounds for i = 1:n_slices
         Htot .= 0.0 .* Htot
         @inbounds for j = 1:K
-            @views Htot .= Htot .+ Hₓ_array[j] .* x_arr[j, i]
+            @views Htot .= Htot .+ B[j] .* x[j, i]
         end
-        @views out[i] .= exp((-1.0im * timestep) .* (Htot .+ H₀))
+        @views out[i] .= exp((-1.0im * dt) .* (Htot .+ A))
     end
 end

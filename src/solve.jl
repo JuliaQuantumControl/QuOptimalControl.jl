@@ -30,15 +30,15 @@ end
 
 
 
-Base.@kwdef struct GRAPE{NS,IIP,OPTS}
-    n_slices::NS = 1
+Base.@kwdef struct GRAPE{IIP,ITG,OPTS}
     isinplace::IIP = true # does this make sense here? It's more of a problem parameter, but not really because AD Grape can't be done "inplace" since we can't mutate
+    integrator_type::ITG = piecewise(n_slices)
     optim_options::OPTS = Optim.Options()
 end
 
-Base.@kwdef struct ADGRAPE{NS,opts}
-    n_slices::NS = 1
-    optim_options::opts = Optim.Options()
+Base.@kwdef struct ADGRAPE{ITG,OPTS}
+    integrator_type::ITG = piecewise(n_slices)
+    optim_options::OPTS = Optim.Options()
 end
 
 # Base.@kwdef struct dCRAB end
@@ -47,7 +47,7 @@ end
 default_algorithm(::Problem) = GRAPE()
 
 
-solve(prob::Problem) = solve(prob, default_algorithm())
+solve(prob::Problem) = solve(prob, default_algorithm(prob))
 
 ####################### Traditional GRAPE ###########################
 function solve(prob::Problem, alg::GRAPE)
@@ -345,11 +345,3 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
     end
     return functional
 end
-
-
-
-println("stop")
-
-
-
-

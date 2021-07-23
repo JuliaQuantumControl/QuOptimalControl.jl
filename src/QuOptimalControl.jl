@@ -18,12 +18,12 @@ export init_GRAPE, init_ensemble
 export commutator, eig_factors, expm_exact_gradient, trace_matmul, save, load
 export pw_evolve,
     pw_evolve_save,
-    pw_evolve_T,
-    pw_ham_save,
     pw_ham_save!,
     pw_gen_save!,
+    pw_prop_save!,
     evolve_func,
     evolve_func!
+export IntegratorType, Piecewise, Continuous
 export algorithm,
     gradientBased, gradientFree, SolutionResult, GRAPE, ADGRAPE, EnsembleSolutionResult
 export solve

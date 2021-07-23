@@ -32,12 +32,15 @@ end
 
 Base.@kwdef struct GRAPE{IIP,ITG,OPTS}
     isinplace::IIP = true # does this make sense here? It's more of a problem parameter, but not really because AD Grape can't be done "inplace" since we can't mutate
-    integrator_type::ITG = piecewise(n_slices)
+    
+    integrator_type::ITG = Piecewise()
     optim_options::OPTS = Optim.Options()
+
+    GRAPE(;iip, n_slices, opti_opts) = new{typeof(iip), typeof(Piecewise(n_slices, "fast")), typeof(opti_opts)}(iip, Piecewise(n_slices, "fast"), opti_opts)
 end
 
 Base.@kwdef struct ADGRAPE{ITG,OPTS}
-    integrator_type::ITG = piecewise(n_slices)
+    integrator_type::ITG = Piecewise()
     optim_options::OPTS = Optim.Options()
 end
 
@@ -257,7 +260,7 @@ function _get_functional(prob, n_slices, sys_type::StateTransfer)
     D = size(A, 1)
     u0 = typeof(A)(I(D))
     function functional(x)
-        U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
+        U = pw_evolve(A, B, x, n_controls, T / n_slices, n_slices, u0)
         ev = U * Xi * U'
         return C1(Xt, ev)
     end
@@ -269,7 +272,7 @@ function _get_functional(prob, n_slices, sys_type::UnitaryGate)
     D = size(A, 1)
     u0 = typeof(A)(I(D))
     function functional(x)
-        U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
+        U = pw_evolve(A, B, x, n_controls, T / n_slices, n_slices, u0)
         ev = U * Xi
         return C1(Xt, ev)
     end
@@ -313,7 +316,7 @@ function _get_ensemble_functional(
             # for a specific ensemble problem
             @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = ens_prob_arr[k]
 
-            U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
+            U = pw_evolve(A, B, x, n_controls, T / n_slices, n_slices, u0)
             ev = U * Xi * U'
             err = C1(Xt, ev) * wts[k]
             fom = fom + err
@@ -336,7 +339,7 @@ function _get_ensemble_functional(ens_prob_arr, n_ens, n_slices, wts, sys_type::
             # for a specific ensemble problem
             @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = ens_prob_arr[k]
 
-            U = pw_evolve_T(A, B, x, n_controls, T / n_slices, n_slices, u0)
+            U = pw_evolve(A, B, x, n_controls, T / n_slices, n_slices, u0)
             ev = U * Xi
             err = C1(Xt, ev) * wts[k]
             fom = fom + err

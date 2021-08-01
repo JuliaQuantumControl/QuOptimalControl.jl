@@ -36,9 +36,9 @@ Base.@kwdef struct GRAPE{IIP,ITG,OPTS}
     optim_options::OPTS = Optim.Options()
 end
 
-function GRAPE(;n_slices, expm_method="fast", isinplace=true, opts=Optim.Options())
+function GRAPE(;n_slices, expm_method="fast", isinplace=true, optim_options=Optim.Options())
     pw_ev = Piecewise(n_slices, expm_method)
-    GRAPE(isinplace, pw_ev, opts)
+    GRAPE(isinplace, pw_ev, optim_options)
 end
 
 Base.@kwdef struct ADGRAPE{ITG,OPTS}
@@ -46,9 +46,9 @@ Base.@kwdef struct ADGRAPE{ITG,OPTS}
     optim_options::OPTS = Optim.Options()
 end
 
-function ADGRAPE(;n_slices, expm_method="fast", opts=Optim.Options())
+function ADGRAPE(;n_slices, expm_method="fast", optim_options=Optim.Options())
     pw_ev = Piecewise(n_slices, expm_method)
-    ADGRAPE(pw_ev, opts)
+    ADGRAPE(pw_ev, optim_options)
 end
 
 # Base.@kwdef struct dCRAB end
@@ -144,7 +144,8 @@ end
 ####################### Traditional GRAPE Ensemble ###########################
 function solve(ens_prob::EnsembleProblem, alg::GRAPE)
     @unpack prob, n_ens, A_g, B_g, XiG, XtG, wts = ens_prob
-    @unpack n_slices, isinplace, optim_options = alg
+    @unpack isinplace, integrator, optim_options = alg
+    @unpack n_slices, expm_method = integrator
 
     ensemble_problem_array = init_ensemble(ens_prob)
 
@@ -253,9 +254,10 @@ end
 # for ADGRAPE we need to dispatch on the system type too
 function solve(prob::Problem, alg::ADGRAPE)
     # @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
-    @unpack n_slices, optim_options = alg
+    @unpack integrator, optim_options = alg
+    @unpack n_slices, expm_method = integrator
 
-    func = _get_functional(prob, alg.n_slices, prob.sys_type)
+    func = _get_functional(prob, n_slices, prob.sys_type)
 
     init = prob.guess
     res = _ADGRAPE(func, init, optim_options)
@@ -289,7 +291,8 @@ end
 
 ####################### ADGRAPE Ensemble ###########################
 function solve(prob::EnsembleProblem, alg::ADGRAPE)
-    @unpack n_slices, optim_options = alg
+    @unpack integrator, optim_options = alg
+    @unpack n_slices, expm_method = integrator
     ensemble_problem_array = init_ensemble(prob)
 
     func = _get_ensemble_functional(

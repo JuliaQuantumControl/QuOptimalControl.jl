@@ -36,9 +36,9 @@ Base.@kwdef struct GRAPE{IIP,ITG,OPTS}
     optim_options::OPTS = Optim.Options()
 end
 
-function GRAPE(;n_slices, expm_method="fast", iip=true, opts=Optim.Options())
+function GRAPE(;n_slices, expm_method="fast", isinplace=true, opts=Optim.Options())
     pw_ev = Piecewise(n_slices, expm_method)
-    GRAPE(iip, pw_ev, opts)
+    GRAPE(isinplace, pw_ev, opts)
 end
 
 Base.@kwdef struct ADGRAPE{ITG,OPTS}
@@ -62,7 +62,8 @@ solve(prob::Problem) = solve(prob, default_algorithm(prob))
 ####################### Traditional GRAPE ###########################
 function solve(prob::Problem, alg::GRAPE)
     @unpack B, A, Xi, Xt, T, n_controls, guess, sys_type = prob
-    @unpack n_slices, isinplace, optim_options = alg
+    @unpack isinplace, integrator, optim_options = alg
+    @unpack n_slices, expm_method = integrator
 
     if isinplace
         state_store, costate_store, propagators, fom, gradient =

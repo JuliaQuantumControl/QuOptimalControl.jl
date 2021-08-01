@@ -63,7 +63,7 @@ An almost allocation free (1 alloc in my tests) version of the Hamiltonian saver
 """
 function pw_ham_save!(A, B, x, n_pulses, n_slices, out)
     K = n_pulses
-    Htot = similar(A) .* 0.0
+    Htot = zeros(eltype(A),size(A))
 
     @views @inbounds for i = 1:n_slices
         Htot .= 0.0 .* Htot
@@ -79,7 +79,7 @@ An almost allocation free (1 alloc in my tests) version of the Generator saving 
 """
 function pw_gen_save!(A, B, x, n_pulses, n_slices, duration, out)
     K = n_pulses
-    Htot = similar(A) .* 0.0
+    Htot = zeros(eltype(A),size(A))
     dt = duration / n_slices
 
     @views @inbounds for i = 1:n_slices
@@ -97,13 +97,14 @@ Compute the propagator using fastExpm and save it in the array defined in out
 """
 function pw_prop_save!(A, B, x, n_pulses, n_slices, dt, out)
     K = n_pulses
-    Htot = similar(A) .* 0.0
+    # Htot = copy(A)
+    Htot = zeros(eltype(A),size(A))
 
     @inbounds for i = 1:n_slices
         Htot .= 0.0 .* Htot
         @inbounds for j = 1:K
-            @views Htot .= Htot .+ B[j] .* x[j, i]
+            Htot .= Htot .+ B[j] .* x[j, i]
         end
-        @views out[i] .= exp((-1.0im * dt) .* (Htot .+ A))
+        out[i] .= exp((-1.0im * dt) .* (Htot .+ A))
     end
 end

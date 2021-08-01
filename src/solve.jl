@@ -31,17 +31,24 @@ end
 
 
 Base.@kwdef struct GRAPE{IIP,ITG,OPTS}
-    isinplace::IIP = true # does this make sense here? It's more of a problem parameter, but not really because AD Grape can't be done "inplace" since we can't mutate
-    
-    integrator_type::ITG = Piecewise()
+    isinplace::IIP = true # does this make sense here? It's more of a problem parameter, but not really because AD Grape can't be done "inplace" since we can't mutate    
+    integrator::ITG = nothing
     optim_options::OPTS = Optim.Options()
+end
 
-    GRAPE(;iip, n_slices, opti_opts) = new{typeof(iip), typeof(Piecewise(n_slices, "fast")), typeof(opti_opts)}(iip, Piecewise(n_slices, "fast"), opti_opts)
+function GRAPE(;n_slices, expm_method="fast", iip=true, opts=Optim.Options())
+    pw_ev = Piecewise(n_slices, expm_method)
+    GRAPE(iip, pw_ev, opts)
 end
 
 Base.@kwdef struct ADGRAPE{ITG,OPTS}
-    integrator_type::ITG = Piecewise()
+    integrator::ITG
     optim_options::OPTS = Optim.Options()
+end
+
+function ADGRAPE(;n_slices, expm_method="fast", opts=Optim.Options())
+    pw_ev = Piecewise(n_slices, expm_method)
+    ADGRAPE(pw_ev, opts)
 end
 
 # Base.@kwdef struct dCRAB end

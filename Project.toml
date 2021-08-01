@@ -5,7 +5,9 @@ version = "0.1.0"
 
 [deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Diffractor = "9f5e2b26-1114-432f-b630-d3fe2085c51c"
 FastClosures = "9aa1b823-49e4-5ca5-8b0f-3971ec8bab6a"
 FastExpm = "7868e603-8603-432e-a1a1-694bd70b01f2"
 FileWatching = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"

@@ -2,3 +2,4 @@ Manifest.toml
 *.txt
 *.bson
 .vscode/settings.json
+test/Diffractor_Test.jl

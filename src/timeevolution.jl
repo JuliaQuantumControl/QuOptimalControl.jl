@@ -9,7 +9,7 @@ Contains code to perform time evolution
 abstract type IntegratorType end
 
 Base.@kwdef struct Piecewise{TS,EXPM} <: IntegratorType 
-    n_n_slices::TS = 1
+    n_slices::TS = 1
     expm_method::EXPM
 end
 

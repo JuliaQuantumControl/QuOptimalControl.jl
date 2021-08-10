@@ -1,4 +1,4 @@
-# QuOptimalControl
+# QuOptimalControl is being replaced by an ecosystem of control packages under the QuantumControl-jl organisation. 
 
 Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 

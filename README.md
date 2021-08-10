@@ -1,8 +1,8 @@
-# QuOptimalControl is being replaced by an ecosystem of control packages under the QuantumControl-jl organisation. 
+# QuOptimalControl is being replaced 
+**by an ecosystem of control packages under the QuantumControl-jl organisation.**
 
-Quantum optimal control essentially tries to provide numerically optimised solutions to quantum problems in as efficient a manner as possible. 
 
-## Usage
+### Usage
 
 Trying to mimic the interface that DifferentialEquations.jl uses we offer several problem definitions. Problems define the dynamics of the quantum system.
 
@@ -39,7 +39,7 @@ visualise_pulse(sol.opti_pulses, duration = prob.T)
 
 ![Bar plot of pulse amplitudes](https://raw.githubusercontent.com/alastair-marshall/QuOptimalControl.jl/master/assets/pulsevis.png "Pulse output")
 
-## Installation
+### Installation
 
 Using Julia's package manager QuOptimalControl.jl is easy to install and use!
 
@@ -48,7 +48,7 @@ Using Julia's package manager QuOptimalControl.jl is easy to install and use!
 ```
 
 
-## Available Algorithms
+### Available Algorithms
 
 Currently the package supports both an analytical gradient based GRAPE optimiser, a new automatic differentiation based version of GRAPE (using Zygote) and a dCRAB (gradient free optimiser). For the defined problem types within the package (ClosedStateTransfer, UnitarySynthesis, OpenSystemCoherenceTransfer, ExperimentInterface) there are several predefined solver methods to make it easy to construct and solve common problems. 
 

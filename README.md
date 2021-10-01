@@ -1,5 +1,5 @@
 # QuOptimalControl is being replaced 
-**by an ecosystem of control packages under the QuantumControl-jl organisation.**
+**by an ecosystem of control packages under the JuliaQuantumControl organisation.**
 
 
 ### Usage

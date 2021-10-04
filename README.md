@@ -1,6 +1,4 @@
-# QuOptimalControl is being replaced 
-**by an ecosystem of control packages under the JuliaQuantumControl organisation.**
-
+# QuOptimalControl is superseded by [QuantumControl.jl](https://github.com/JuliaQuantumControl)
 
 ### Usage
 
